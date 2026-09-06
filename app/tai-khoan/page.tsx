@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -24,7 +24,9 @@ export default function TaiKhoanPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(true);
+
   const [selectedVip, setSelectedVip] = useState("3");
   const [vipInfo, setVipInfo] = useState<VipInfo | null>(null);
 
@@ -32,15 +34,23 @@ export default function TaiKhoanPage() {
   const [orderCode, setOrderCode] = useState("");
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [orderCreated, setOrderCreated] = useState(false);
+
+  const [paymentStatus, setPaymentStatus] = useState<
+    "pending" | "approved" | "rejected"
+  >("pending");
+
   const [copied, setCopied] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const vipPackages: VipPackage[] = [
     {
       id: "1",
       title: "VIP 1 THÁNG",
       duration: "30 ngày",
-      price: "69.000đ",
-      priceNumber: 69000,
+      price: "79.000đ",
+      priceNumber: 79000,
       popular: false,
     },
     {
@@ -50,6 +60,14 @@ export default function TaiKhoanPage() {
       price: "189.000đ",
       priceNumber: 189000,
       popular: true,
+    },
+    {
+      id: "6",
+      title: "VIP 6 THÁNG",
+      duration: "180 ngày",
+      price: "359.000đ",
+      priceNumber: 359000,
+      popular: false,
     },
     {
       id: "12",
@@ -72,26 +90,41 @@ export default function TaiKhoanPage() {
         return;
       }
 
+      setUserId(user.id);
       setEmail(user.email ?? "");
 
-      const { data, error } = await supabase
-        .from("user_vip")
-        .select("package_months, price, started_at, expires_at")
-        .eq("user_id", user.id)
-        .gt("expires_at", new Date().toISOString())
-        .order("expires_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (!error && data) {
-        setVipInfo(data);
-      }
+      await loadVip(user.id);
 
       setLoading(false);
     }
 
     loadUser();
   }, [router]);
+
+  async function loadVip(uid: string) {
+    const { data, error } = await supabase
+      .from("user_vip")
+      .select("package_months, price, started_at, expires_at")
+      .eq("user_id", uid)
+      .gt("expires_at", new Date().toISOString())
+      .order("expires_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) {
+      setVipInfo(data);
+    } else {
+      setVipInfo(null);
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+    };
+  }, []);
 
   const selectedPackage = vipPackages.find(
     (pkg) => pkg.id === selectedVip
@@ -111,13 +144,14 @@ export default function TaiKhoanPage() {
       .substring(2, 7)
       .toUpperCase();
 
-    return `TRADA${selectedVip}T${random}`;
+    return `TRADAVIP${selectedVip}T${random}`;
   }
 
   async function handleCreateOrder() {
     if (!selectedPackage || creatingOrder) return;
 
     setCreatingOrder(true);
+    setSuccessMessage("");
 
     const {
       data: { user },
@@ -128,13 +162,42 @@ export default function TaiKhoanPage() {
       return;
     }
 
+    const packageMonths = Number(selectedPackage.id);
+
+    /*
+     * Kiểm tra xem người dùng có đơn VIP pending
+     * cùng gói chưa.
+     *
+     * Nếu có thì dùng lại đơn đó để tránh tạo
+     * quá nhiều đơn khi người dùng bấm nhiều lần.
+     */
+    const { data: existingOrder } = await supabase
+      .from("vip_orders")
+      .select("id, order_code, package_months, amount, status")
+      .eq("user_id", user.id)
+      .eq("package_months", packageMonths)
+      .eq("amount", selectedPackage.priceNumber)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingOrder) {
+      setOrderCode(existingOrder.order_code);
+      setOrderCreated(true);
+      setPaymentStatus("pending");
+      setShowPayment(true);
+      setCreatingOrder(false);
+
+      startPaymentPolling(existingOrder.order_code, user.id);
+      return;
+    }
+
     const newOrderCode = createOrderCode();
 
     const { error } = await supabase.from("vip_orders").insert({
       user_id: user.id,
-      package_months: selectedPackage.id === "12"
-        ? 12
-        : Number(selectedPackage.id),
+      package_months: packageMonths,
       amount: selectedPackage.priceNumber,
       order_code: newOrderCode,
       status: "pending",
@@ -149,8 +212,80 @@ export default function TaiKhoanPage() {
 
     setOrderCode(newOrderCode);
     setOrderCreated(true);
+    setPaymentStatus("pending");
     setShowPayment(true);
     setCreatingOrder(false);
+
+    startPaymentPolling(newOrderCode, user.id);
+  }
+
+  function startPaymentPolling(code: string, uid: string) {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+    }
+
+    /*
+     * Kiểm tra ngay lập tức một lần
+     */
+    checkPaymentStatus(code, uid);
+
+    /*
+     * Sau đó kiểm tra mỗi 3 giây
+     */
+    pollingRef.current = setInterval(() => {
+      checkPaymentStatus(code, uid);
+    }, 3000);
+  }
+
+  async function checkPaymentStatus(code: string, uid: string) {
+    const { data, error } = await supabase
+      .from("vip_orders")
+      .select("status")
+      .eq("user_id", uid)
+      .eq("order_code", code)
+      .maybeSingle();
+
+    if (error || !data) {
+      return;
+    }
+
+    if (data.status === "approved") {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+
+      setPaymentStatus("approved");
+
+      /*
+       * Load lại thông tin VIP để hiển thị
+       * ngày hết hạn mới.
+       */
+      await loadVip(uid);
+
+      setSuccessMessage(
+        "🎉 Thanh toán thành công! VIP của bạn đã được kích hoạt."
+      );
+
+      /*
+       * Cho người dùng nhìn thấy thông báo
+       * khoảng 1.5 giây rồi tự đóng.
+       */
+      setTimeout(() => {
+        setShowPayment(false);
+        setOrderCreated(false);
+        setOrderCode("");
+      }, 1500);
+    }
+
+    if (data.status === "rejected") {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+
+      setPaymentStatus("rejected");
+    }
   }
 
   function getTransferContent() {
@@ -240,6 +375,23 @@ export default function TaiKhoanPage() {
             👤 Tài khoản
           </h1>
         </div>
+
+        {/* THÔNG BÁO */}
+        {successMessage && (
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "15px 18px",
+              borderRadius: "14px",
+              background: "rgba(22,163,74,0.12)",
+              border: "1px solid rgba(34,197,94,0.35)",
+              color: "#86efac",
+              fontWeight: 700,
+            }}
+          >
+            {successMessage}
+          </div>
+        )}
 
         {/* THÔNG TIN TÀI KHOẢN */}
         <section
@@ -398,7 +550,7 @@ export default function TaiKhoanPage() {
                 fontSize: "14px",
               }}
             >
-              Chọn gói VIP phù hợp để xem nội dung dành riêng cho thành viên.
+              Chọn gói VIP phù hợp để xem toàn bộ nội dung trên Trà Đá Drama.
             </p>
           </div>
 
@@ -406,7 +558,8 @@ export default function TaiKhoanPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(220px, 1fr))",
               gap: "18px",
             }}
           >
@@ -538,7 +691,8 @@ export default function TaiKhoanPage() {
                   fontWeight: 900,
                 }}
               >
-                👑 VIP {selectedVip} tháng — {selectedPackage?.price}
+                👑 VIP {selectedVip} tháng —{" "}
+                {selectedPackage?.price}
               </div>
             </div>
 
@@ -733,12 +887,16 @@ export default function TaiKhoanPage() {
                 }}
               >
                 <div>
-                  <span style={{ color: "#777" }}>Ngân hàng: </span>
+                  <span style={{ color: "#777" }}>
+                    Ngân hàng:{" "}
+                  </span>
                   <strong>Sacombank</strong>
                 </div>
 
                 <div>
-                  <span style={{ color: "#777" }}>Chủ tài khoản: </span>
+                  <span style={{ color: "#777" }}>
+                    Chủ tài khoản:{" "}
+                  </span>
                   <strong>Lâm Thị Thu Hiền</strong>
                 </div>
 
@@ -751,7 +909,9 @@ export default function TaiKhoanPage() {
                   }}
                 >
                   <div>
-                    <span style={{ color: "#777" }}>Số tài khoản: </span>
+                    <span style={{ color: "#777" }}>
+                      Số tài khoản:{" "}
+                    </span>
                     <strong>070117517142</strong>
                   </div>
 
@@ -770,7 +930,9 @@ export default function TaiKhoanPage() {
                       fontSize: "12px",
                     }}
                   >
-                    {copied === "stk" ? "✓ Đã copy" : "Sao chép"}
+                    {copied === "stk"
+                      ? "✓ Đã copy"
+                      : "Sao chép"}
                   </button>
                 </div>
 
@@ -811,7 +973,10 @@ export default function TaiKhoanPage() {
                     <button
                       type="button"
                       onClick={() =>
-                        copyText(getTransferContent(), "content")
+                        copyText(
+                          getTransferContent(),
+                          "content"
+                        )
                       }
                       style={{
                         border: "1px solid #333",
@@ -832,56 +997,172 @@ export default function TaiKhoanPage() {
               </div>
             </div>
 
-            {/* VÍ DỤ */}
-            <div
-              style={{
-                marginTop: "16px",
-                padding: "15px",
-                borderRadius: "13px",
-                background: "#171717",
-                border: "1px solid #292929",
-                color: "#aaa",
-                fontSize: "13px",
-                lineHeight: 1.7,
-              }}
-            >
-              <strong style={{ color: "#fff" }}>
-                📌 Ví dụ:
-              </strong>{" "}
-              Bạn mua VIP 3 tháng thì chuyển{" "}
-              <strong style={{ color: "#fff" }}>
-                189.000đ
-              </strong>{" "}
-              và ghi đúng nội dung{" "}
-              <strong style={{ color: "#ff4b55" }}>
-                {orderCode}
-              </strong>
-              .
-              <br />
-              Sau khi chuyển khoản, vui lòng giữ lại giao dịch để đối
-              chiếu.
-            </div>
+            {/* TRẠNG THÁI TỰ ĐỘNG */}
+            {paymentStatus === "pending" && (
+              <div
+                style={{
+                  marginTop: "18px",
+                  padding: "17px",
+                  borderRadius: "13px",
+                  background:
+                    "linear-gradient(135deg, rgba(234,179,8,0.10), rgba(255,255,255,0.03))",
+                  border: "1px solid rgba(234,179,8,0.25)",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "18px",
+                    marginBottom: "6px",
+                  }}
+                >
+                  ⏳
+                </div>
 
-            {/* TRẠNG THÁI */}
-            <div
-              style={{
-                marginTop: "18px",
-                padding: "14px",
-                borderRadius: "12px",
-                background: "rgba(255,255,255,0.04)",
-                color: "#999",
-                fontSize: "13px",
-                textAlign: "center",
-              }}
-            >
-              🕐 Đơn hàng đang ở trạng thái{" "}
-              <strong style={{ color: "#fff" }}>
-                CHỜ DUYỆT
-              </strong>
-              .
-              <br />
-              VIP chỉ được kích hoạt sau khi thanh toán được xác nhận.
-            </div>
+                <div
+                  style={{
+                    color: "#facc15",
+                    fontWeight: 900,
+                    fontSize: "15px",
+                  }}
+                >
+                  ĐANG CHỜ THANH TOÁN
+                </div>
+
+                <div
+                  style={{
+                    color: "#999",
+                    fontSize: "13px",
+                    marginTop: "6px",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Hệ thống đang tự động kiểm tra giao dịch.
+                  <br />
+                  Sau khi nhận được tiền, VIP sẽ được kích hoạt
+                  tự động.
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "12px",
+                    fontSize: "12px",
+                    color: "#666",
+                  }}
+                >
+                  Mã đơn:{" "}
+                  <strong style={{ color: "#aaa" }}>
+                    {orderCode}
+                  </strong>
+                </div>
+              </div>
+            )}
+
+            {/* ĐÃ THANH TOÁN */}
+            {paymentStatus === "approved" && (
+              <div
+                style={{
+                  marginTop: "18px",
+                  padding: "18px",
+                  borderRadius: "13px",
+                  background:
+                    "rgba(34,197,94,0.10)",
+                  border:
+                    "1px solid rgba(34,197,94,0.35)",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "28px",
+                    marginBottom: "7px",
+                  }}
+                >
+                  🎉
+                </div>
+
+                <div
+                  style={{
+                    color: "#4ade80",
+                    fontWeight: 900,
+                    fontSize: "17px",
+                  }}
+                >
+                  THANH TOÁN THÀNH CÔNG
+                </div>
+
+                <div
+                  style={{
+                    color: "#aaa",
+                    fontSize: "13px",
+                    marginTop: "7px",
+                  }}
+                >
+                  VIP đã được kích hoạt cho tài khoản của bạn.
+                </div>
+              </div>
+            )}
+
+            {/* BỊ TỪ CHỐI */}
+            {paymentStatus === "rejected" && (
+              <div
+                style={{
+                  marginTop: "18px",
+                  padding: "17px",
+                  borderRadius: "13px",
+                  background:
+                    "rgba(220,38,38,0.10)",
+                  border:
+                    "1px solid rgba(220,38,38,0.3)",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    color: "#f87171",
+                    fontWeight: 900,
+                  }}
+                >
+                  ❌ ĐƠN THANH TOÁN BỊ TỪ CHỐI
+                </div>
+
+                <div
+                  style={{
+                    color: "#999",
+                    fontSize: "13px",
+                    marginTop: "6px",
+                  }}
+                >
+                  Vui lòng tạo đơn mới hoặc liên hệ quản trị viên.
+                </div>
+              </div>
+            )}
+
+            {/* HƯỚNG DẪN */}
+            {paymentStatus === "pending" && (
+              <div
+                style={{
+                  marginTop: "16px",
+                  padding: "15px",
+                  borderRadius: "13px",
+                  background: "#171717",
+                  border: "1px solid #292929",
+                  color: "#aaa",
+                  fontSize: "13px",
+                  lineHeight: 1.7,
+                }}
+              >
+                <strong style={{ color: "#fff" }}>
+                  📌 Lưu ý:
+                </strong>{" "}
+                Chuyển đúng số tiền và đặc biệt phải ghi đúng
+                <strong style={{ color: "#ff4b55" }}>
+                  {" "}
+                  nội dung chuyển khoản
+                </strong>{" "}
+                ở trên để hệ thống nhận diện giao dịch.
+              </div>
+            )}
           </div>
         </div>
       )}

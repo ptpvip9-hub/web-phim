@@ -6,9 +6,14 @@ import { supabase } from "@/lib/supabase";
 
 export default function DangNhapPage() {
   const [isRegister, setIsRegister] = useState(false);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -24,19 +29,46 @@ export default function DangNhapPage() {
     // ĐĂNG KÝ
     // =========================
     if (isRegister) {
+      // Kiểm tra mật khẩu
+      if (password.length < 6) {
+        setMessage("Mật khẩu phải có ít nhất 6 ký tự.");
+        setLoading(false);
+        return;
+      }
+
+      // Kiểm tra nhập lại mật khẩu
+      if (password !== confirmPassword) {
+        setMessage("Mật khẩu nhập lại không khớp.");
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
       });
 
       if (error) {
-        setMessage("Đăng ký thất bại: " + error.message);
-      } else {
+        console.error("REGISTER ERROR:", error);
+        console.error("REGISTER ERROR CODE:", error.code);
+        console.error("REGISTER ERROR STATUS:", error.status);
+
         setMessage(
-          "Đăng ký thành công! Hãy kiểm tra email để xác nhận tài khoản."
+          `Đăng ký thất bại: ${error.message} | code: ${
+            error.code ?? "none"
+          }`
         );
+
+        setLoading(false);
+        return;
       }
 
+      setMessage(
+        "Đăng ký thành công! Bạn có thể đăng nhập để xem phim."
+      );
+
+      setPassword("");
+      setConfirmPassword("");
       setLoading(false);
       return;
     }
@@ -50,14 +82,24 @@ export default function DangNhapPage() {
     });
 
     if (error) {
-      setMessage("Đăng nhập thất bại: " + error.message);
+      console.error("LOGIN ERROR:", error);
+      console.error("LOGIN ERROR CODE:", error.code);
+      console.error("LOGIN ERROR STATUS:", error.status);
+
+      setMessage(
+        `Đăng nhập thất bại: ${error.message} | code: ${
+          error.code ?? "none"
+        }`
+      );
+
       setLoading(false);
       return;
     }
 
-    // Kiểm tra đăng nhập thành công
+    // =========================
+    // ĐĂNG NHẬP THÀNH CÔNG
+    // =========================
     if (data.session) {
-      // Chuyển thẳng về trang chủ
       window.location.href = "/";
       return;
     }
@@ -240,7 +282,7 @@ export default function DangNhapPage() {
           <div
             style={{
               position: "relative",
-              marginBottom: "26px",
+              marginBottom: isRegister ? "21px" : "26px",
             }}
           >
             <input
@@ -285,6 +327,114 @@ export default function DangNhapPage() {
               {showPassword ? "🙈" : "👁️"}
             </button>
           </div>
+
+          {/* NHẬP LẠI MẬT KHẨU - CHỈ HIỆN KHI ĐĂNG KÝ */}
+          {isRegister && (
+            <>
+              <label
+                style={{
+                  display: "block",
+                  color: "#ddd",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  marginBottom: "9px",
+                }}
+              >
+                🔐 Nhập lại mật khẩu
+              </label>
+
+              <div
+                style={{
+                  position: "relative",
+                  marginBottom: "26px",
+                }}
+              >
+                <input
+                  type={
+                    showConfirmPassword ? "text" : "password"
+                  }
+                  placeholder="Nhập lại mật khẩu"
+                  value={confirmPassword}
+                  onChange={(e) =>
+                    setConfirmPassword(e.target.value)
+                  }
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "14px 48px 14px 15px",
+                    borderRadius: "11px",
+                    border:
+                      confirmPassword &&
+                      password !== confirmPassword
+                        ? "1px solid #e50914"
+                        : "1px solid #333",
+                    outline: "none",
+                    background: "#1b1b1b",
+                    color: "white",
+                    fontSize: "15px",
+                  }}
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowConfirmPassword(!showConfirmPassword)
+                  }
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    fontSize: "18px",
+                    padding: "5px",
+                  }}
+                  title={
+                    showConfirmPassword
+                      ? "Ẩn mật khẩu"
+                      : "Hiện mật khẩu"
+                  }
+                >
+                  {showConfirmPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+
+              {/* BÁO SAI MẬT KHẨU */}
+              {confirmPassword &&
+                password !== confirmPassword && (
+                  <div
+                    style={{
+                      marginTop: "-18px",
+                      marginBottom: "20px",
+                      color: "#ff7777",
+                      fontSize: "13px",
+                    }}
+                  >
+                    ⚠️ Mật khẩu nhập lại không khớp
+                  </div>
+                )}
+
+              {/* BÁO ĐÚNG MẬT KHẨU */}
+              {confirmPassword &&
+                password === confirmPassword && (
+                  <div
+                    style={{
+                      marginTop: "-18px",
+                      marginBottom: "20px",
+                      color: "#4ade80",
+                      fontSize: "13px",
+                    }}
+                  >
+                    ✓ Mật khẩu trùng khớp
+                  </div>
+                )}
+            </>
+          )}
 
           {/* NÚT */}
           <button
@@ -347,9 +497,7 @@ export default function DangNhapPage() {
             fontSize: "14px",
           }}
         >
-          {isRegister
-            ? "Đã có tài khoản?"
-            : "Chưa có tài khoản?"}
+          {isRegister ? "Đã có tài khoản?" : "Chưa có tài khoản?"}
 
           <button
             type="button"
@@ -357,6 +505,7 @@ export default function DangNhapPage() {
               setIsRegister(!isRegister);
               setMessage("");
               setPassword("");
+              setConfirmPassword("");
             }}
             style={{
               marginLeft: "7px",

@@ -15,96 +15,24 @@ const MOVIE_TITLE = "Yêu Đến Mức Cấm Kỵ";
 const MOVIE_PRICE = 20000;
 
 const episodes = [
-  {
-    id: 1,
-    title: "Tập 1–5",
-    video: `${R2_BASE}/tap1-5.mp4`,
-  },
-  {
-    id: 2,
-    title: "Tập 6–10",
-    video: `${R2_BASE}/tap6-10.mp4`,
-  },
-  {
-    id: 3,
-    title: "Tập 11–14",
-    video: `${R2_BASE}/tap11-14.mp4`,
-  },
-  {
-    id: 4,
-    title: "Tập 15–19",
-    video: `${R2_BASE}/tap15-19.mp4`,
-  },
-  {
-    id: 5,
-    title: "Tập 20–24",
-    video: `${R2_BASE}/tap20-24.mp4`,
-  },
-  {
-    id: 6,
-    title: "Tập 25–27",
-    video: `${R2_BASE}/tap25-27.mp4`,
-  },
-  {
-    id: 7,
-    title: "Tập 28–30",
-    video: `${R2_BASE}/tap28-30.mp4`,
-  },
-  {
-    id: 8,
-    title: "Tập 31–34",
-    video: `${R2_BASE}/tap31-34.mp4`,
-  },
-  {
-    id: 9,
-    title: "Tập 35–38",
-    video: `${R2_BASE}/tap35-38.mp4`,
-  },
-  {
-    id: 10,
-    title: "Tập 39–42",
-    video: `${R2_BASE}/tap39-42.mp4`,
-  },
-  {
-    id: 11,
-    title: "Tập 43–45",
-    video: `${R2_BASE}/tap43-45.mp4`,
-  },
-  {
-    id: 12,
-    title: "Tập 46–51",
-    video: `${R2_BASE}/tap46-51.mp4`,
-  },
-  {
-    id: 13,
-    title: "Tập 52–57",
-    video: `${R2_BASE}/tap52-57.mp4`,
-  },
-  {
-    id: 14,
-    title: "Tập 58–62",
-    video: `${R2_BASE}/tap58-62.mp4`,
-  },
-  {
-    id: 15,
-    title: "Tập 63–66",
-    video: `${R2_BASE}/tap63-66.mp4`,
-  },
-  {
-    id: 16,
-    title: "Tập 67–69",
-    video: `${R2_BASE}/tap67-69.mp4`,
-  },
-  {
-    id: 17,
-    title: "Tập 70–75",
-    video: `${R2_BASE}/tap70-75.mp4`,
-  },
-  {
-    id: 18,
-    title: "Tập cuối",
-    video: `${R2_BASE}/tap-cuoi.mp4`,
-  },
+  { id: 1, title: "Tập 1–5", video: `${R2_BASE}/tap1-5.mp4` },
+  { id: 2, title: "Tập 6–10", video: `${R2_BASE}/tap6-10.mp4` },
+  { id: 3, title: "Tập 11–14", video: `${R2_BASE}/tap11-14.mp4` },
+  { id: 4, title: "Tập 15–19", video: `${R2_BASE}/tap15-19.mp4` },
+  { id: 5, title: "Tập 20–24", video: `${R2_BASE}/tap20-24.mp4` },
+  { id: 6, title: "Tập 25–27", video: `${R2_BASE}/tap25-27.mp4` },
+  { id: 7, title: "Tập 28–30", video: `${R2_BASE}/tap28-30.mp4` },
+  { id: 8, title: "Tập 31–34", video: `${R2_BASE}/tap31-34.mp4` },
+  { id: 9, title: "Tập 35–38", video: `${R2_BASE}/tap35-38.mp4` },
+  { id: 10, title: "Tập 39–42", video: `${R2_BASE}/tap39-42.mp4` },
+  { id: 11, title: "Tập 43–45", video: `${R2_BASE}/tap43-45.mp4` },
+  { id: 12, title: "Tập 46–51", video: `${R2_BASE}/tap46-51.mp4` },
+  { id: 13, title: "Tập 52–57", video: `${R2_BASE}/tap52-57.mp4` },
+  { id: 14, title: "Tập 58–62", video: `${R2_BASE}/tap58-62.mp4` },
+  { id: 15, title: "Tập 63–66", video: `${R2_BASE}/tap63-66.mp4` },
+  { id: 16, title: "Tập 67–69", video: `${R2_BASE}/tap67-69.mp4` },
+  { id: 17, title: "Tập 70–75", video: `${R2_BASE}/tap70-75.mp4` },
+  { id: 18, title: "Tập cuối", video: `${R2_BASE}/tap-cuoi.mp4` },
 ];
 
 export default function YeuDenMucCamKy() {
@@ -117,7 +45,7 @@ export default function YeuDenMucCamKy() {
   const [hasMovieAccess, setHasMovieAccess] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
 
-  // Modal chọn cách mở khóa
+  // Modal chọn mở khóa
   const [showVipChoice, setShowVipChoice] = useState(false);
 
   // Modal thanh toán
@@ -126,8 +54,13 @@ export default function YeuDenMucCamKy() {
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [copied, setCopied] = useState("");
 
+  // Trạng thái thanh toán
+  const [paymentStatus, setPaymentStatus] = useState<
+    "pending" | "approved"
+  >("pending");
+
   // =========================================
-  // KIỂM TRA VIP + QUYỀN MUA PHIM
+  // KIỂM TRA QUYỀN VIP + MUA PHIM
   // =========================================
 
   useEffect(() => {
@@ -138,7 +71,6 @@ export default function YeuDenMucCamKy() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      // Chưa đăng nhập
       if (!user) {
         setIsVip(false);
         setHasMovieAccess(false);
@@ -146,10 +78,7 @@ export default function YeuDenMucCamKy() {
         return;
       }
 
-      // =====================================
-      // 1. KIỂM TRA VIP
-      // =====================================
-
+      // KIỂM TRA VIP
       const { data: vipData, error: vipError } =
         await supabase
           .from("user_vip")
@@ -163,20 +92,13 @@ export default function YeuDenMucCamKy() {
           .maybeSingle();
 
       if (vipError) {
-        console.error(
-          "Lỗi kiểm tra VIP:",
-          vipError
-        );
-
+        console.error("Lỗi kiểm tra VIP:", vipError);
         setIsVip(false);
       } else {
         setIsVip(!!vipData);
       }
 
-      // =====================================
-      // 2. KIỂM TRA ĐÃ MUA RIÊNG BỘ PHIM
-      // =====================================
-
+      // KIỂM TRA ĐÃ MUA PHIM
       const {
         data: movieAccess,
         error: movieError,
@@ -211,11 +133,96 @@ export default function YeuDenMucCamKy() {
   function createMovieOrderCode() {
     const random = Math.random()
       .toString(36)
-      .substring(2, 7)
+      .substring(2, 8)
       .toUpperCase();
 
     return `TRADAP${random}`;
   }
+
+  // =========================================
+  // TỰ KIỂM TRA TRẠNG THÁI ĐƠN
+  // =========================================
+
+  useEffect(() => {
+    if (!showPayment || !orderCode) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function checkPayment() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user || cancelled) {
+        return;
+      }
+
+      const { data: order, error } =
+        await supabase
+          .from("movie_orders")
+          .select("status")
+          .eq("order_code", orderCode)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+      if (error) {
+        console.error(
+          "Lỗi kiểm tra thanh toán:",
+          error
+        );
+
+        return;
+      }
+
+      if (order?.status === "approved") {
+        if (cancelled) return;
+
+        setPaymentStatus("approved");
+
+        // Cập nhật quyền ngay trên giao diện
+        setHasMovieAccess(true);
+
+        // Đợi một chút để người dùng thấy thông báo thành công
+        setTimeout(() => {
+          if (cancelled) return;
+
+          setShowPayment(false);
+          setOrderCode("");
+
+          // Cuộn xuống video
+          setTimeout(() => {
+            document
+              .getElementById("video-player")
+              ?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+          }, 200);
+
+          alert(
+            "🎉 Thanh toán thành công!\n\n" +
+              "Bộ phim đã được mở khóa. Bạn có thể xem toàn bộ các tập."
+          );
+        }, 1200);
+      }
+    }
+
+    // Kiểm tra ngay lần đầu
+    checkPayment();
+
+    // Sau đó cứ 3 giây kiểm tra 1 lần
+    const interval = setInterval(
+      checkPayment,
+      3000
+    );
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [showPayment, orderCode]);
 
   // =========================================
   // MUA RIÊNG BỘ PHIM
@@ -228,7 +235,6 @@ export default function YeuDenMucCamKy() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // Chưa đăng nhập
     if (!user) {
       const goLogin = confirm(
         "Bạn cần đăng nhập để mua bộ phim.\n\n" +
@@ -243,6 +249,35 @@ export default function YeuDenMucCamKy() {
     }
 
     setCreatingOrder(true);
+
+    // -----------------------------------------
+    // KIỂM TRA ĐÃ CÓ ĐƠN ĐANG CHỜ CHƯA
+    // -----------------------------------------
+
+    const { data: existingOrder } =
+      await supabase
+        .from("movie_orders")
+        .select("order_code, status")
+        .eq("user_id", user.id)
+        .eq("movie_slug", MOVIE_SLUG)
+        .eq("status", "pending")
+        .order("created_at", {
+          ascending: false,
+        })
+        .limit(1)
+        .maybeSingle();
+
+    if (existingOrder?.order_code) {
+      setOrderCode(existingOrder.order_code);
+      setPaymentStatus("pending");
+      setShowPayment(true);
+      setCreatingOrder(false);
+      return;
+    }
+
+    // -----------------------------------------
+    // TẠO ĐƠN MỚI
+    // -----------------------------------------
 
     const newOrderCode =
       createMovieOrderCode();
@@ -274,6 +309,7 @@ export default function YeuDenMucCamKy() {
     }
 
     setOrderCode(newOrderCode);
+    setPaymentStatus("pending");
     setShowPayment(true);
     setCreatingOrder(false);
   }
@@ -286,6 +322,7 @@ export default function YeuDenMucCamKy() {
     if (!orderCode) return "";
 
     const amount = MOVIE_PRICE;
+
     const addInfo =
       encodeURIComponent(orderCode);
 
@@ -327,17 +364,7 @@ export default function YeuDenMucCamKy() {
   const changeEpisode = (
     episode: (typeof episodes)[number]
   ) => {
-    if (checkingAccess) {
-      return;
-    }
-
-    /*
-      Tập 1–19:
-      -> miễn phí
-
-      Tập 20 trở đi:
-      -> cần VIP hoặc đã mua riêng bộ phim
-    */
+    if (checkingAccess) return;
 
     const isLocked = episode.id >= 5;
 
@@ -361,10 +388,6 @@ export default function YeuDenMucCamKy() {
         });
     }, 100);
   };
-
-  // =========================================
-  // QUYỀN TRUY CẬP TOÀN BỘ BỘ PHIM
-  // =========================================
 
   const fullAccess =
     isVip || hasMovieAccess;
@@ -930,8 +953,6 @@ export default function YeuDenMucCamKy() {
 
           <div className="relative w-full max-w-[600px] rounded-3xl border border-white/10 bg-[#111] p-7 shadow-2xl">
 
-            {/* ĐÓNG */}
-
             <button
               type="button"
               onClick={() =>
@@ -941,8 +962,6 @@ export default function YeuDenMucCamKy() {
             >
               ×
             </button>
-
-            {/* TIÊU ĐỀ */}
 
             <div className="text-center">
 
@@ -962,13 +981,7 @@ export default function YeuDenMucCamKy() {
 
             </div>
 
-            {/* 2 LỰA CHỌN */}
-
             <div className="mt-7 grid gap-4 md:grid-cols-2">
-
-              {/* =================================
-                  MUA RIÊNG
-              ================================= */}
 
               <button
                 type="button"
@@ -996,23 +1009,17 @@ export default function YeuDenMucCamKy() {
                   20.000đ
                 </div>
 
-                <div className="mt-4 rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-black text-white transition group-hover:bg-red-700">
+                <div className="mt-4 rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-black text-white">
                   🔓 Mua ngay
                 </div>
 
               </button>
 
-              {/* =================================
-                  VIP
-              ================================= */}
-
               <button
                 type="button"
                 onClick={() => {
                   setShowVipChoice(false);
-                  router.push(
-                    "/tai-khoan"
-                  );
+                  router.push("/tai-khoan");
                 }}
                 className="group rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-5 text-left transition hover:border-yellow-500 hover:bg-yellow-500/20"
               >
@@ -1034,15 +1041,13 @@ export default function YeuDenMucCamKy() {
                   👑 VIP
                 </div>
 
-                <div className="mt-4 rounded-lg bg-yellow-500 px-4 py-3 text-center text-sm font-black text-black transition group-hover:bg-yellow-400">
+                <div className="mt-4 rounded-lg bg-yellow-500 px-4 py-3 text-center text-sm font-black text-black">
                   Đăng ký VIP
                 </div>
 
               </button>
 
             </div>
-
-            {/* HỦY */}
 
             <button
               type="button"
@@ -1061,28 +1066,27 @@ export default function YeuDenMucCamKy() {
       )}
 
       {/* =====================================
-          MODAL THANH TOÁN 20K
+          MODAL CHỜ THANH TOÁN
       ===================================== */}
 
       {showPayment && (
 
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/85 p-5 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/90 p-5 backdrop-blur-sm">
 
           <div className="relative w-full max-w-[720px] rounded-[22px] border border-white/10 bg-[#111] p-7 shadow-2xl">
 
-            {/* ĐÓNG */}
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowPayment(false)
-              }
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-[#1b1b1b] text-lg text-gray-400 hover:text-white"
-            >
-              ×
-            </button>
-
-            {/* TIÊU ĐỀ */}
+            {/* KHÔNG CHO ĐÓNG KHI ĐANG CHỜ */}
+            {paymentStatus === "approved" && (
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPayment(false)
+                }
+                className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-[#1b1b1b] text-lg text-gray-400 hover:text-white"
+              >
+                ×
+              </button>
+            )}
 
             <div className="text-center">
 
@@ -1100,6 +1104,55 @@ export default function YeuDenMucCamKy() {
 
             </div>
 
+            {/* TRẠNG THÁI */}
+
+            {paymentStatus === "pending" ? (
+
+              <div className="mt-6 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-5 text-center">
+
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yellow-500/10 text-3xl">
+                  ⏳
+                </div>
+
+                <div className="mt-3 text-lg font-black text-yellow-400">
+                  ĐANG CHỜ THANH TOÁN
+                </div>
+
+                <p className="mt-2 text-sm leading-6 text-gray-400">
+                  Hệ thống đang tự động kiểm tra giao dịch của bạn.
+                  <br />
+                  Sau khi nhận được tiền, phim sẽ tự động mở khóa.
+                </p>
+
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-yellow-400" />
+                  Đang kiểm tra giao dịch...
+                </div>
+
+              </div>
+
+            ) : (
+
+              <div className="mt-6 rounded-2xl border border-green-500/30 bg-green-500/10 p-5 text-center">
+
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10 text-3xl">
+                  ✓
+                </div>
+
+                <div className="mt-3 text-lg font-black text-green-400">
+                  THANH TOÁN THÀNH CÔNG
+                </div>
+
+                <p className="mt-2 text-sm text-gray-400">
+                  Bộ phim đã được mở khóa.
+                  <br />
+                  Đang chuyển bạn đến phần xem phim...
+                </p>
+
+              </div>
+
+            )}
+
             {/* GIÁ */}
 
             <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-center">
@@ -1116,115 +1169,113 @@ export default function YeuDenMucCamKy() {
 
             {/* QR */}
 
-            <div className="mt-6 flex justify-center">
+            {paymentStatus === "pending" && (
 
-              <div className="rounded-2xl bg-white p-3">
+              <div className="mt-6 flex justify-center">
 
-                <img
-                  src={getQrUrl()}
-                  alt="QR thanh toán mua phim"
-                  className="block h-[270px] w-[270px]"
-                />
+                <div className="rounded-2xl bg-white p-3">
 
-              </div>
-
-            </div>
-
-            {/* THÔNG TIN CHUYỂN KHOẢN */}
-
-            <div className="mt-6 rounded-2xl border border-white/10 bg-[#171717] p-5">
-
-              <div className="mb-4 text-sm font-black">
-                🏦 Thông tin chuyển khoản
-              </div>
-
-              <div className="space-y-3 text-sm">
-
-                <div>
-
-                  <span className="text-gray-500">
-                    Ngân hàng:{" "}
-                  </span>
-
-                  <strong>
-                    Sacombank
-                  </strong>
+                  <img
+                    src={getQrUrl()}
+                    alt="QR thanh toán mua phim"
+                    className="block h-[270px] w-[270px]"
+                  />
 
                 </div>
 
-                <div>
+              </div>
 
-                  <span className="text-gray-500">
-                    Chủ tài khoản:{" "}
-                  </span>
+            )}
 
-                  <strong>
-                    Lâm Thị Thu Hiền
-                  </strong>
+            {/* THÔNG TIN */}
 
+            {paymentStatus === "pending" && (
+
+              <div className="mt-6 rounded-2xl border border-white/10 bg-[#171717] p-5">
+
+                <div className="mb-4 text-sm font-black">
+                  🏦 Thông tin chuyển khoản
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
+                <div className="space-y-3 text-sm">
 
                   <div>
-
                     <span className="text-gray-500">
-                      Số tài khoản:{" "}
+                      Ngân hàng:{" "}
                     </span>
 
                     <strong>
-                      070117517142
+                      Sacombank
                     </strong>
-
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      copyText(
-                        "070117517142",
-                        "stk"
-                      )
-                    }
-                    className="rounded-lg border border-white/10 bg-[#222] px-3 py-2 text-xs text-gray-300 hover:bg-[#292929]"
-                  >
+                  <div>
+                    <span className="text-gray-500">
+                      Chủ tài khoản:{" "}
+                    </span>
 
-                    {copied === "stk"
-                      ? "✓ Đã copy"
-                      : "Sao chép"}
-
-                  </button>
-
-                </div>
-
-                <div className="border-t border-white/10 pt-4">
-
-                  <div className="mb-2 text-xs text-gray-500">
-                    Nội dung chuyển khoản
+                    <strong>
+                      Lâm Thị Thu Hiền
+                    </strong>
                   </div>
 
                   <div className="flex items-center justify-between gap-3">
 
-                    <strong className="text-base tracking-wide text-red-400">
-                      {orderCode}
-                    </strong>
+                    <div>
+                      <span className="text-gray-500">
+                        Số tài khoản:{" "}
+                      </span>
+
+                      <strong>
+                        070117517142
+                      </strong>
+                    </div>
 
                     <button
                       type="button"
                       onClick={() =>
                         copyText(
-                          orderCode,
-                          "content"
+                          "070117517142",
+                          "stk"
                         )
                       }
                       className="rounded-lg border border-white/10 bg-[#222] px-3 py-2 text-xs text-gray-300 hover:bg-[#292929]"
                     >
-
-                      {copied === "content"
+                      {copied === "stk"
                         ? "✓ Đã copy"
                         : "Sao chép"}
-
                     </button>
+
+                  </div>
+
+                  <div className="border-t border-white/10 pt-4">
+
+                    <div className="mb-2 text-xs text-gray-500">
+                      Nội dung chuyển khoản
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3">
+
+                      <strong className="text-base tracking-wide text-red-400">
+                        {orderCode}
+                      </strong>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyText(
+                            orderCode,
+                            "content"
+                          )
+                        }
+                        className="rounded-lg border border-white/10 bg-[#222] px-3 py-2 text-xs text-gray-300 hover:bg-[#292929]"
+                      >
+                        {copied === "content"
+                          ? "✓ Đã copy"
+                          : "Sao chép"}
+                      </button>
+
+                    </div>
 
                   </div>
 
@@ -1232,53 +1283,60 @@ export default function YeuDenMucCamKy() {
 
               </div>
 
-            </div>
+            )}
 
             {/* LƯU Ý */}
 
-            <div className="mt-5 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm leading-7 text-gray-400">
+            {paymentStatus === "pending" && (
 
-              <strong className="text-yellow-400">
-                📌 Lưu ý:
-              </strong>
+              <div className="mt-5 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm leading-7 text-gray-400">
 
-              <br />
+                <strong className="text-yellow-400">
+                  📌 Lưu ý:
+                </strong>
 
-              Chuyển đúng{" "}
+                <br />
 
-              <strong className="text-white">
-                20.000đ
-              </strong>
+                Chuyển đúng{" "}
 
-              {" "}và ghi đúng mã đơn:
+                <strong className="text-white">
+                  20.000đ
+                </strong>
 
-              <strong className="ml-1 text-red-400">
-                {orderCode}
-              </strong>
+                {" "}và ghi đúng mã đơn:
 
-              <br />
+                <strong className="ml-1 text-red-400">
+                  {orderCode}
+                </strong>
 
-              Sau khi chuyển khoản,
-              admin sẽ kiểm tra và duyệt đơn.
+                <br />
 
-            </div>
+                Không cần báo admin.
+                Hệ thống sẽ tự động xác nhận thanh toán.
 
-            {/* TRẠNG THÁI */}
+              </div>
 
-            <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-gray-500">
+            )}
 
-              🕐 Đơn mua phim đang ở trạng thái{" "}
+            {/* CHỜ */}
 
-              <strong className="text-yellow-400">
-                CHỜ DUYỆT
-              </strong>
+            {paymentStatus === "pending" && (
 
-              <br />
+              <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center">
 
-              Sau khi admin xác nhận thanh toán,
-              bộ phim sẽ được mở khóa cho tài khoản này.
+                <div className="text-sm font-bold text-yellow-400">
+                  ⏳ ĐANG CHỜ HỆ THỐNG XÁC NHẬN
+                </div>
 
-            </div>
+                <p className="mt-2 text-xs leading-6 text-gray-500">
+                  Sau khi giao dịch thành công,
+                  cửa sổ này sẽ tự đóng và bạn có thể
+                  xem toàn bộ phim.
+                </p>
+
+              </div>
+
+            )}
 
           </div>
 
