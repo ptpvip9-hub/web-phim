@@ -8,7 +8,7 @@ const VIDEO_URL =
 const episodes = [
   {
     id: 1,
-    title: "Tập 1",
+    title: "Tập 1-5",
     video: VIDEO_URL,
   },
 ];
