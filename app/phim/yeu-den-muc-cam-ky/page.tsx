@@ -19,6 +19,86 @@ const episodes = [
     title: "Tập 6–10",
     video: `${R2_BASE}/tap6-10.mp4`,
   },
+  {
+    id: 3,
+    title: "Tập 11–14",
+    video: `${R2_BASE}/tap11-14.mp4`,
+  },
+  {
+    id: 4,
+    title: "Tập 15–19",
+    video: `${R2_BASE}/tap15-19.mp4`,
+  },
+  {
+    id: 5,
+    title: "Tập 20–24",
+    video: `${R2_BASE}/tap20-24.mp4`,
+  },
+  {
+    id: 6,
+    title: "Tập 25–27",
+    video: `${R2_BASE}/tap25-27.mp4`,
+  },
+  {
+    id: 7,
+    title: "Tập 28–30",
+    video: `${R2_BASE}/tap28-30.mp4`,
+  },
+  {
+    id: 8,
+    title: "Tập 31–34",
+    video: `${R2_BASE}/tap31-34.mp4`,
+  },
+  {
+    id: 9,
+    title: "Tập 35–38",
+    video: `${R2_BASE}/tap35-38.mp4`,
+  },
+  {
+    id: 10,
+    title: "Tập 39–42",
+    video: `${R2_BASE}/tap39-42.mp4`,
+  },
+  {
+    id: 11,
+    title: "Tập 43–45",
+    video: `${R2_BASE}/tap43-45.mp4`,
+  },
+  {
+    id: 12,
+    title: "Tập 46–51",
+    video: `${R2_BASE}/tap46-51.mp4`,
+  },
+  {
+    id: 13,
+    title: "Tập 52–57",
+    video: `${R2_BASE}/tap52-57.mp4`,
+  },
+  {
+    id: 14,
+    title: "Tập 58–62",
+    video: `${R2_BASE}/tap58-62.mp4`,
+  },
+  {
+    id: 15,
+    title: "Tập 63–66",
+    video: `${R2_BASE}/tap63-66.mp4`,
+  },
+  {
+    id: 16,
+    title: "Tập 67–69",
+    video: `${R2_BASE}/tap67-69.mp4`,
+  },
+  {
+    id: 17,
+    title: "Tập 70–75",
+    video: `${R2_BASE}/tap70-75.mp4`,
+  },
+  {
+    id: 18,
+    title: "Tập cuối",
+    video: `${R2_BASE}/tap-cuoi.mp4`,
+  },
 ];
 
 export default function YeuDenMucCamKy() {
@@ -121,7 +201,7 @@ export default function YeuDenMucCamKy() {
             <div className="mt-6 flex flex-wrap gap-3 text-sm">
 
               <span className="rounded-md bg-red-600 px-3 py-1.5 font-bold">
-                MỚI
+                FULL
               </span>
 
               <span className="rounded-md bg-white/10 px-3 py-1.5">
@@ -129,7 +209,7 @@ export default function YeuDenMucCamKy() {
               </span>
 
               <span className="rounded-md bg-white/10 px-3 py-1.5">
-                10 TẬP
+                75+ TẬP
               </span>
 
               <span className="rounded-md bg-white/10 px-3 py-1.5">
@@ -188,6 +268,7 @@ export default function YeuDenMucCamKy() {
 
         </div>
 
+        {/* VIDEO PLAYER */}
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
 
           <video
@@ -207,12 +288,20 @@ export default function YeuDenMucCamKy() {
 
         </div>
 
-        <p className="mt-4 text-sm text-gray-500">
-          Đang phát:{" "}
-          <span className="text-gray-300">
-            {currentEpisode.title}
-          </span>
-        </p>
+        <div className="mt-4 flex items-center justify-between">
+
+          <p className="text-sm text-gray-500">
+            Đang phát:{" "}
+            <span className="text-gray-300">
+              {currentEpisode.title}
+            </span>
+          </p>
+
+          <p className="text-sm text-gray-600">
+            {currentEpisode.id} / {episodes.length}
+          </p>
+
+        </div>
 
       </section>
 
@@ -237,12 +326,15 @@ export default function YeuDenMucCamKy() {
 
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
 
             {episodes.map((episode) => {
 
               const isActive =
                 currentEpisode.id === episode.id;
+
+              const isFinal =
+                episode.title === "Tập cuối";
 
               return (
                 <button
@@ -255,20 +347,22 @@ export default function YeuDenMucCamKy() {
                   }`}
                 >
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
 
                     <div>
+
                       <p className="text-xs font-bold uppercase tracking-widest text-red-500">
-                        PHẦN
+                        {isFinal ? "KẾT THÚC" : `PHẦN ${episode.id}`}
                       </p>
 
                       <h3 className="mt-1 text-xl font-bold">
                         {episode.title}
                       </h3>
+
                     </div>
 
                     <span
-                      className={`flex h-12 w-12 items-center justify-center rounded-full transition ${
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition ${
                         isActive
                           ? "bg-red-600"
                           : "bg-white/10 group-hover:bg-red-600"
@@ -331,7 +425,7 @@ export default function YeuDenMucCamKy() {
               </span>
 
               <span className="rounded-md bg-white/5 px-3 py-2 text-sm text-gray-300">
-                📺 10 tập
+                📺 75+ tập
               </span>
 
               <span className="rounded-md bg-white/5 px-3 py-2 text-sm text-gray-300">
@@ -354,7 +448,7 @@ export default function YeuDenMucCamKy() {
               </p>
 
               <p className="mt-2 text-sm text-gray-500">
-                Đã cập nhật tập 1–10
+                Đã cập nhật đầy đủ các tập phim.
               </p>
 
             </div>
