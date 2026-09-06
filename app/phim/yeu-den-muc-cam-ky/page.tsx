@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+
+const POSTER = "/poster-yeu-den-muc-cam-ky.jpg";
 
 const VIDEO_URL =
   "https://pub-189653ef3ebf47d2b0987a0944a4e8ac.r2.dev/tap1-5.mp4";
@@ -8,89 +11,143 @@ const VIDEO_URL =
 const episodes = [
   {
     id: 1,
-    title: "Tập 1-5",
+    title: "Tập 1–5",
     video: VIDEO_URL,
   },
 ];
 
 export default function YeuDenMucCamKy() {
   const [currentEpisode, setCurrentEpisode] = useState(episodes[0]);
-  const [isPlaying, setIsPlaying] = useState(false);
 
   const changeEpisode = (episode: (typeof episodes)[0]) => {
     setCurrentEpisode(episode);
-    setIsPlaying(false);
 
     setTimeout(() => {
-      document.getElementById("video-player")?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+      document
+        .getElementById("video-player")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
     }, 100);
   };
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-[#050505] text-white">
 
-      {/* ================= HEADER ================= */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-[70px] max-w-7xl items-center justify-between px-5">
 
-          <a
+          <Link
             href="/"
-            className="text-xl font-bold tracking-wide"
+            className="flex items-center gap-3"
           >
-            🎬 TRÀ ĐÁ DRAMA
-          </a>
+            <span className="text-3xl">
+              🎬
+            </span>
 
-          <nav className="hidden gap-7 text-sm text-gray-300 md:flex">
-            <a
+            <span className="text-xl font-black">
+              TRÀ ĐÁ{" "}
+              <span className="text-red-500">
+                DRAMA
+              </span>
+            </span>
+          </Link>
+
+          <nav className="hidden items-center gap-8 md:flex">
+
+            <Link
               href="/"
-              className="transition hover:text-white"
+              className="font-medium text-gray-400 transition hover:text-white"
             >
               Trang chủ
-            </a>
+            </Link>
 
-            <a
-              href="/#phim"
-              className="transition hover:text-white"
+            <Link
+              href="/phim"
+              className="font-medium text-gray-400 transition hover:text-white"
             >
               Phim
-            </a>
+            </Link>
 
-            <a
-              href="/#phim-moi"
-              className="transition hover:text-white"
+            <Link
+              href="/phim/yeu-den-muc-cam-ky"
+              className="font-medium text-white"
             >
               Phim mới
-            </a>
+            </Link>
+
           </nav>
+
+          <div className="hidden md:block">
+            <div className="flex h-10 w-64 items-center rounded-full border border-white/10 bg-white/5 px-4">
+
+              <input
+                type="text"
+                placeholder="Tìm phim..."
+                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
+              />
+
+              <span>
+                🔍
+              </span>
+
+            </div>
+          </div>
 
         </div>
       </header>
 
-
-      {/* ================= HERO ================= */}
+      {/* HERO PHIM */}
       <section className="relative overflow-hidden border-b border-white/10">
 
-        {/* nền đỏ */}
-        <div className="absolute inset-0 bg-gradient-to-b from-red-950/50 via-black/80 to-black" />
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url("${POSTER}")`,
+          }}
+        />
 
-        <div className="relative mx-auto max-w-7xl px-4 py-20 md:py-28">
+        <div className="absolute inset-0 bg-black/75" />
 
-          <div className="max-w-4xl">
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/30" />
 
-            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-red-400">
+        <div className="relative mx-auto max-w-7xl px-5 py-24">
+
+          <div className="max-w-3xl">
+
+            <p className="text-sm font-bold uppercase tracking-[0.35em] text-red-500">
               PHIM NGẮN • DRAMA
             </p>
 
-            <h1 className="font-serif text-4xl font-bold leading-tight md:text-6xl">
-              YÊU ĐẾN MỨC
+            <h1 className="mt-5 font-serif text-5xl font-black leading-tight md:text-7xl">
+              Yêu Đến Mức
               <br />
-              CẤM KỴ
+              Cấm Kỵ
             </h1>
 
-            <p className="mt-6 max-w-2xl text-sm leading-7 text-gray-400 md:text-base">
+            <div className="mt-6 flex flex-wrap gap-3 text-sm">
+
+              <span className="rounded-md bg-red-600 px-3 py-1.5 font-bold">
+                MỚI
+              </span>
+
+              <span className="rounded-md bg-white/10 px-3 py-1.5">
+                Drama
+              </span>
+
+              <span className="rounded-md bg-white/10 px-3 py-1.5">
+                Tập 1–5
+              </span>
+
+              <span className="rounded-md bg-white/10 px-3 py-1.5">
+                HD
+              </span>
+
+            </div>
+
+            <p className="mt-7 max-w-2xl text-base leading-8 text-gray-300 md:text-lg">
               Một câu chuyện tình yêu đầy day dứt,
               nơi những cảm xúc tưởng như không thể
               lại trở thành một mối tình không thể
@@ -98,13 +155,15 @@ export default function YeuDenMucCamKy() {
             </p>
 
             <button
-              onClick={() =>
-                document.getElementById("video-player")?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "center",
-                })
-              }
-              className="mt-7 rounded-lg bg-red-600 px-6 py-3 text-sm font-bold transition hover:bg-red-500"
+              onClick={() => {
+                document
+                  .getElementById("video-player")
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                  });
+              }}
+              className="mt-8 rounded-lg bg-red-600 px-7 py-3.5 font-bold transition hover:scale-105 hover:bg-red-700"
             >
               ▶ Xem phim
             </button>
@@ -112,38 +171,37 @@ export default function YeuDenMucCamKy() {
           </div>
 
         </div>
+
       </section>
 
-
-      {/* ================= VIDEO ================= */}
+      {/* KHU VỰC XEM PHIM */}
       <section
         id="video-player"
-        className="mx-auto max-w-6xl px-4 py-10"
+        className="mx-auto max-w-6xl px-5 py-14"
       >
 
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-7 flex items-end justify-between gap-5">
 
           <div>
 
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-red-500">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-red-500">
               ĐANG XEM
             </p>
 
-            <h2 className="mt-2 text-2xl font-bold md:text-3xl">
+            <h2 className="mt-2 text-3xl font-black">
               Yêu Đến Mức Cấm Kỵ
             </h2>
 
           </div>
 
-          <div className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300">
+          <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300">
             {currentEpisode.title}
-          </div>
+          </span>
 
         </div>
 
-
-        {/* VIDEO PLAYER */}
-        <div className="overflow-hidden rounded-xl border border-white/10 bg-black shadow-2xl">
+        {/* VIDEO */}
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
 
           <video
             key={currentEpisode.video}
@@ -151,8 +209,6 @@ export default function YeuDenMucCamKy() {
             controls
             playsInline
             preload="metadata"
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
           >
             <source
               src={currentEpisode.video}
@@ -164,29 +220,68 @@ export default function YeuDenMucCamKy() {
 
         </div>
 
+        <p className="mt-4 text-sm text-gray-500">
+          Nếu video chưa phát, hãy nhấn nút ▶ trên trình phát.
+        </p>
 
-        {/* THÔNG TIN VIDEO */}
-        <div className="mt-5 rounded-xl border border-white/10 bg-zinc-950 p-5">
+      </section>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* DANH SÁCH TẬP */}
+      <section className="border-y border-white/10 bg-zinc-950">
 
-            <div>
+        <div className="mx-auto max-w-6xl px-5 py-14">
 
-              <h3 className="text-lg font-semibold">
-                Yêu Đến Mức Cấm Kỵ - {currentEpisode.title}
-              </h3>
+          <div className="mb-8">
 
-              <p className="mt-1 text-sm text-gray-500">
-                {isPlaying
-                  ? "Đang phát video..."
-                  : "Nhấn nút Play để xem phim."}
-              </p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-red-500">
+              DANH SÁCH TẬP
+            </p>
 
-            </div>
+            <h2 className="mt-2 text-3xl font-black">
+              Các tập phim
+            </h2>
 
-            <span className="w-fit rounded-full bg-red-600/10 px-3 py-1 text-xs text-red-400">
-              HD
-            </span>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+
+            {episodes.map((episode) => (
+
+              <button
+                key={episode.id}
+                onClick={() => changeEpisode(episode)}
+                className={`group rounded-xl border p-5 text-left transition ${
+                  currentEpisode.id === episode.id
+                    ? "border-red-500 bg-red-600/10"
+                    : "border-white/10 bg-white/[0.03] hover:border-red-500/50 hover:bg-white/5"
+                }`}
+              >
+
+                <div className="flex items-center justify-between">
+
+                  <span className="font-bold">
+                    {episode.title}
+                  </span>
+
+                  <span
+                    className={`flex h-9 w-9 items-center justify-center rounded-full ${
+                      currentEpisode.id === episode.id
+                        ? "bg-red-600"
+                        : "bg-white/10"
+                    }`}
+                  >
+                    ▶
+                  </span>
+
+                </div>
+
+                <p className="mt-3 text-sm text-gray-500">
+                  Xem ngay
+                </p>
+
+              </button>
+
+            ))}
 
           </div>
 
@@ -194,132 +289,107 @@ export default function YeuDenMucCamKy() {
 
       </section>
 
+      {/* THÔNG TIN PHIM */}
+      <section className="mx-auto max-w-6xl px-5 py-16">
 
-      {/* ================= DANH SÁCH TẬP ================= */}
-      <section
-        id="tap-phim"
-        className="mx-auto max-w-6xl px-4 pb-14"
-      >
+        <div className="grid gap-10 md:grid-cols-[260px_1fr]">
 
-        <div className="mb-6">
+          <div className="overflow-hidden rounded-2xl border border-white/10">
+            <img
+              src={POSTER}
+              alt="Yêu Đến Mức Cấm Kỵ"
+              className="h-full w-full object-cover"
+            />
+          </div>
 
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-red-500">
-            DANH SÁCH
-          </p>
+          <div>
 
-          <h2 className="mt-2 text-2xl font-bold md:text-3xl">
-            Các tập phim
-          </h2>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-red-500">
+              THÔNG TIN PHIM
+            </p>
+
+            <h2 className="mt-3 text-3xl font-black md:text-4xl">
+              Yêu Đến Mức Cấm Kỵ
+            </h2>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+
+              <span className="rounded-md bg-red-600/20 px-3 py-2 text-sm text-red-400">
+                🎭 Drama
+              </span>
+
+              <span className="rounded-md bg-white/5 px-3 py-2 text-sm text-gray-300">
+                ❤️ Tình cảm
+              </span>
+
+              <span className="rounded-md bg-white/5 px-3 py-2 text-sm text-gray-300">
+                📺 Tập 1–5
+              </span>
+
+              <span className="rounded-md bg-white/5 px-3 py-2 text-sm text-gray-300">
+                HD
+              </span>
+
+            </div>
+
+            <p className="mt-7 leading-8 text-gray-400">
+              Một câu chuyện tình yêu đầy day dứt,
+              nơi những cảm xúc tưởng như không thể
+              lại trở thành một mối tình không thể
+              thoát khỏi.
+            </p>
+
+          </div>
 
         </div>
 
+      </section>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* FOOTER */}
+      <footer className="border-t border-white/10 bg-black">
 
-          {episodes.map((episode) => {
+        <div className="mx-auto max-w-6xl px-5 py-10">
 
-            const active =
-              currentEpisode.id === episode.id;
+          <div className="flex flex-col justify-between gap-5 md:flex-row">
 
-            return (
-              <button
-                key={episode.id}
-                onClick={() => changeEpisode(episode)}
-                className={`group flex items-center gap-4 rounded-xl border p-4 text-left transition ${
-                  active
-                    ? "border-red-600 bg-red-950/30"
-                    : "border-white/10 bg-zinc-950 hover:border-white/30 hover:bg-zinc-900"
-                }`}
+            <div>
+
+              <p className="text-xl font-black">
+                🎬 TRÀ ĐÁ{" "}
+                <span className="text-red-500">
+                  DRAMA
+                </span>
+              </p>
+
+              <p className="mt-3 text-sm text-gray-500">
+                Xem phim drama hay mỗi ngày.
+              </p>
+
+            </div>
+
+            <div className="flex gap-6 text-sm text-gray-500">
+
+              <Link
+                href="/"
+                className="hover:text-white"
               >
+                Trang chủ
+              </Link>
 
-                {/* SỐ TẬP */}
-                <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
-                    active
-                      ? "bg-red-600 text-white"
-                      : "bg-white/5 text-gray-400"
-                  }`}
-                >
-                  {String(episode.id).padStart(2, "0")}
-                </div>
+              <Link
+                href="/phim"
+                className="hover:text-white"
+              >
+                Kho phim
+              </Link>
 
+            </div>
 
-                {/* TÊN TẬP */}
-                <div className="min-w-0 flex-1">
+          </div>
 
-                  <p className="font-semibold">
-                    {episode.title}
-                  </p>
-
-                  <p className="mt-1 truncate text-xs text-gray-500">
-                    Yêu Đến Mức Cấm Kỵ
-                  </p>
-
-                </div>
-
-
-                {/* NÚT PLAY */}
-                <div
-                  className={`text-lg ${
-                    active
-                      ? "text-red-500"
-                      : "text-gray-600 group-hover:text-red-500"
-                  }`}
-                >
-                  ▶
-                </div>
-
-              </button>
-            );
-          })}
-
-        </div>
-
-      </section>
-
-
-      {/* ================= GIỚI THIỆU ================= */}
-      <section className="mx-auto max-w-6xl px-4 pb-16">
-
-        <div className="rounded-xl border border-white/10 bg-zinc-950 p-6 md:p-8">
-
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-red-500">
-            GIỚI THIỆU PHIM
-          </p>
-
-          <h2 className="mt-3 text-2xl font-bold">
-            Yêu Đến Mức Cấm Kỵ
-          </h2>
-
-          <p className="mt-4 max-w-4xl text-sm leading-7 text-gray-400">
-            Có những tình cảm càng cố gắng chối bỏ
-            lại càng trở nên sâu đậm. Giữa những ranh
-            giới không thể vượt qua, tình yêu của họ
-            dần trở thành một mối chấp niệm không dễ
-            buông bỏ.
-          </p>
-
-          <p className="mt-4 text-sm text-gray-500">
-            ❤️ Cảm ơn mọi người đã ủng hộ Trà Đá Drama.
-          </p>
-
-        </div>
-
-      </section>
-
-
-      {/* ================= FOOTER ================= */}
-      <footer className="border-t border-white/10 bg-zinc-950">
-
-        <div className="mx-auto max-w-7xl px-4 py-8 text-center">
-
-          <p className="font-semibold">
-            🎬 TRÀ ĐÁ DRAMA
-          </p>
-
-          <p className="mt-2 text-xs text-gray-600">
-            © 2026 Trà Đá Drama. All rights reserved.
-          </p>
+          <div className="mt-8 border-t border-white/10 pt-6 text-xs text-gray-600">
+            © 2026 TRÀ ĐÁ DRAMA. All rights reserved.
+          </div>
 
         </div>
 
