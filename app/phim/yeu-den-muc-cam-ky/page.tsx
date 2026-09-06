@@ -2,12 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 const POSTER = "/poster-yeu-den-muc-cam-ky.jpg";
 
 const R2_BASE =
   "https://pub-189653ef3ebf47d2b0987a0944a4e8ac.r2.dev/yeu-den-muc-cam-ky";
+
+const MOVIE_SLUG = "yeu-den-muc-cam-ky";
+const MOVIE_TITLE = "Yêu Đến Mức Cấm Kỵ";
+const MOVIE_PRICE = 20000;
 
 const episodes = [
   {
@@ -103,127 +108,274 @@ const episodes = [
 ];
 
 export default function YeuDenMucCamKy() {
-  const [currentEpisode, setCurrentEpisode] = useState(episodes[0]);
-const [isVip, setIsVip] = useState(false);
-const [checkingVip, setCheckingVip] = useState(true);
+  const router = useRouter();
 
-useEffect(() => {
-  async function checkVip() {
+  const [currentEpisode, setCurrentEpisode] = useState(episodes[0]);
+
+  // Quyền xem
+  const [isVip, setIsVip] = useState(false);
+  const [hasMovieAccess, setHasMovieAccess] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
+
+  // Modal chọn cách mở khóa
+  const [showVipChoice, setShowVipChoice] = useState(false);
+
+  // Modal thanh toán
+  const [showPayment, setShowPayment] = useState(false);
+  const [orderCode, setOrderCode] = useState("");
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [copied, setCopied] = useState("");
+
+  // =========================================
+  // KIỂM TRA VIP + QUYỀN MUA PHIM
+  // =========================================
+
+  useEffect(() => {
+    async function checkAccess() {
+      setCheckingAccess(true);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // Chưa đăng nhập
+      if (!user) {
+        setIsVip(false);
+        setHasMovieAccess(false);
+        setCheckingAccess(false);
+        return;
+      }
+
+      // =====================================
+      // 1. KIỂM TRA VIP
+      // =====================================
+
+      const { data: vipData, error: vipError } =
+        await supabase
+          .from("user_vip")
+          .select("expires_at")
+          .eq("user_id", user.id)
+          .gt("expires_at", new Date().toISOString())
+          .order("expires_at", {
+            ascending: false,
+          })
+          .limit(1)
+          .maybeSingle();
+
+      if (vipError) {
+        console.error(
+          "Lỗi kiểm tra VIP:",
+          vipError
+        );
+
+        setIsVip(false);
+      } else {
+        setIsVip(!!vipData);
+      }
+
+      // =====================================
+      // 2. KIỂM TRA ĐÃ MUA RIÊNG BỘ PHIM
+      // =====================================
+
+      const {
+        data: movieAccess,
+        error: movieError,
+      } = await supabase
+        .from("user_movie_access")
+        .select("id, movie_slug")
+        .eq("user_id", user.id)
+        .eq("movie_slug", MOVIE_SLUG)
+        .maybeSingle();
+
+      if (movieError) {
+        console.error(
+          "Lỗi kiểm tra quyền phim:",
+          movieError
+        );
+
+        setHasMovieAccess(false);
+      } else {
+        setHasMovieAccess(!!movieAccess);
+      }
+
+      setCheckingAccess(false);
+    }
+
+    checkAccess();
+  }, []);
+
+  // =========================================
+  // TẠO MÃ ĐƠN
+  // =========================================
+
+  function createMovieOrderCode() {
+    const random = Math.random()
+      .toString(36)
+      .substring(2, 7)
+      .toUpperCase();
+
+    return `TRADAP${random}`;
+  }
+
+  // =========================================
+  // MUA RIÊNG BỘ PHIM
+  // =========================================
+
+  async function handleBuyMovie() {
+    if (creatingOrder) return;
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
+    // Chưa đăng nhập
     if (!user) {
-      setIsVip(false);
-      setCheckingVip(false);
+      const goLogin = confirm(
+        "Bạn cần đăng nhập để mua bộ phim.\n\n" +
+          "Bạn có muốn đến trang đăng nhập không?"
+      );
+
+      if (goLogin) {
+        router.push("/dang-nhap");
+      }
+
       return;
     }
 
-    const { data } = await supabase
-      .from("profiles")
-      .select("is_vip, vip_expires_at")
-      .eq("user_id", user.id)
-      .single();
+    setCreatingOrder(true);
 
-    if (
-      data?.is_vip === true &&
-      data?.vip_expires_at &&
-      new Date(data.vip_expires_at) > new Date()
-    ) {
-      setIsVip(true);
-    } else {
-      setIsVip(false);
+    const newOrderCode =
+      createMovieOrderCode();
+
+    const { error } = await supabase
+      .from("movie_orders")
+      .insert({
+        user_id: user.id,
+        movie_slug: MOVIE_SLUG,
+        movie_title: MOVIE_TITLE,
+        amount: MOVIE_PRICE,
+        order_code: newOrderCode,
+        status: "pending",
+      });
+
+    if (error) {
+      console.error(
+        "Lỗi tạo đơn mua phim:",
+        error
+      );
+
+      alert(
+        "Không thể tạo đơn mua phim.\n\n" +
+          "Vui lòng thử lại."
+      );
+
+      setCreatingOrder(false);
+      return;
     }
 
-    setCheckingVip(false);
+    setOrderCode(newOrderCode);
+    setShowPayment(true);
+    setCreatingOrder(false);
   }
 
-  checkVip();
-}, []);
-  const changeEpisode = (episode: (typeof episodes)[number]) => {
-  // Tập 1-19 miễn phí
-  // Tập 20+ chỉ VIP mới xem được
-  if (episode.id >= 5 && !isVip) {
-  const buy = confirm(
-    "🔒 Nội dung này cần mở khóa.\n\n" +
-    "💰 Giá mua bộ phim: 20.000đ\n\n" +
-    "Bạn có muốn mua quyền xem các tập 20+ không?"
-  );
+  // =========================================
+  // QR THANH TOÁN
+  // =========================================
 
-  if (buy) {
-    alert("Tính năng thanh toán sẽ được mở ở bước tiếp theo.");
+  function getQrUrl() {
+    if (!orderCode) return "";
+
+    const amount = MOVIE_PRICE;
+    const addInfo =
+      encodeURIComponent(orderCode);
+
+    const accountName =
+      encodeURIComponent(
+        "LAM THI THU HIEN"
+      );
+
+    return `https://img.vietqr.io/image/970403-070117517142-compact2.png?amount=${amount}&addInfo=${addInfo}&accountName=${accountName}`;
   }
 
-  return;
+  // =========================================
+  // COPY
+  // =========================================
 
+  async function copyText(
+    text: string,
+    type: string
+  ) {
+    try {
+      await navigator.clipboard.writeText(
+        text
+      );
+
+      setCopied(type);
+
+      setTimeout(() => {
+        setCopied("");
+      }, 1800);
+    } catch {
+      alert("Không thể sao chép.");
+    }
   }
 
-  setCurrentEpisode(episode);
+  // =========================================
+  // CHỌN TẬP
+  // =========================================
 
-  setTimeout(() => {
-    document.getElementById("video-player")?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }, 100);
-};
+  const changeEpisode = (
+    episode: (typeof episodes)[number]
+  ) => {
+    if (checkingAccess) {
+      return;
+    }
+
+    /*
+      Tập 1–19:
+      -> miễn phí
+
+      Tập 20 trở đi:
+      -> cần VIP hoặc đã mua riêng bộ phim
+    */
+
+    const isLocked = episode.id >= 5;
+
+    if (
+      isLocked &&
+      !isVip &&
+      !hasMovieAccess
+    ) {
+      setShowVipChoice(true);
+      return;
+    }
+
+    setCurrentEpisode(episode);
+
+    setTimeout(() => {
+      document
+        .getElementById("video-player")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+    }, 100);
+  };
+
+  // =========================================
+  // QUYỀN TRUY CẬP TOÀN BỘ BỘ PHIM
+  // =========================================
+
+  const fullAccess =
+    isVip || hasMovieAccess;
 
   return (
     <main className="min-h-screen bg-[#050505] text-white">
 
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-[70px] max-w-7xl items-center justify-between px-5">
+      {/* =====================================
+          HERO
+      ===================================== */}
 
-          <Link href="/" className="flex items-center gap-3">
-            <span className="text-3xl">🎬</span>
-
-            <span className="text-xl font-black tracking-wide">
-              TRÀ ĐÁ{" "}
-              <span className="text-red-500">
-                DRAMA
-              </span>
-            </span>
-          </Link>
-
-          <nav className="hidden items-center gap-8 md:flex">
-            <Link
-              href="/"
-              className="text-gray-400 transition hover:text-white"
-            >
-              Trang chủ
-            </Link>
-
-            <Link
-              href="/phim"
-              className="text-gray-400 transition hover:text-white"
-            >
-              Phim
-            </Link>
-
-            <Link
-              href="/phim/yeu-den-muc-cam-ky"
-              className="text-white"
-            >
-              Phim mới
-            </Link>
-          </nav>
-
-          <div className="hidden md:block">
-            <div className="flex h-10 w-56 items-center rounded-full border border-white/10 bg-white/5 px-4">
-              <input
-                type="text"
-                placeholder="Tìm phim..."
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
-              />
-              <span>🔍</span>
-            </div>
-          </div>
-
-        </div>
-      </header>
-
-      {/* HERO */}
       <section className="relative overflow-hidden border-b border-white/10">
 
         <div
@@ -269,6 +421,19 @@ useEffect(() => {
                 HD
               </span>
 
+              {isVip && (
+                <span className="rounded-md bg-yellow-500/20 px-3 py-1.5 font-bold text-yellow-400">
+                  👑 VIP
+                </span>
+              )}
+
+              {!isVip &&
+                hasMovieAccess && (
+                  <span className="rounded-md bg-green-500/20 px-3 py-1.5 font-bold text-green-400">
+                    ✓ ĐÃ MUA BỘ
+                  </span>
+                )}
+
             </div>
 
             <p className="mt-7 max-w-2xl text-base leading-8 text-gray-300 md:text-lg">
@@ -279,9 +444,12 @@ useEffect(() => {
             </p>
 
             <button
+              type="button"
               onClick={() => {
                 document
-                  .getElementById("video-player")
+                  .getElementById(
+                    "video-player"
+                  )
                   ?.scrollIntoView({
                     behavior: "smooth",
                     block: "center",
@@ -295,9 +463,13 @@ useEffect(() => {
           </div>
 
         </div>
+
       </section>
 
-      {/* VIDEO */}
+      {/* =====================================
+          VIDEO
+      ===================================== */}
+
       <section
         id="video-player"
         className="mx-auto max-w-6xl px-5 py-14"
@@ -306,6 +478,7 @@ useEffect(() => {
         <div className="mb-7 flex items-end justify-between gap-5">
 
           <div>
+
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-red-500">
               ĐANG XEM
             </p>
@@ -313,6 +486,7 @@ useEffect(() => {
             <h2 className="mt-2 text-3xl font-black">
               Yêu Đến Mức Cấm Kỵ
             </h2>
+
           </div>
 
           <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300">
@@ -321,7 +495,6 @@ useEffect(() => {
 
         </div>
 
-        {/* VIDEO PLAYER */}
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
 
           <video
@@ -331,12 +504,14 @@ useEffect(() => {
             playsInline
             preload="metadata"
           >
+
             <source
               src={currentEpisode.video}
               type="video/mp4"
             />
 
             Trình duyệt của bạn không hỗ trợ phát video.
+
           </video>
 
         </div>
@@ -345,20 +520,25 @@ useEffect(() => {
 
           <p className="text-sm text-gray-500">
             Đang phát:{" "}
+
             <span className="text-gray-300">
               {currentEpisode.title}
             </span>
           </p>
 
           <p className="text-sm text-gray-600">
-            {currentEpisode.id} / {episodes.length}
+            {currentEpisode.id} /{" "}
+            {episodes.length}
           </p>
 
         </div>
 
       </section>
 
-      {/* EPISODES */}
+      {/* =====================================
+          DANH SÁCH TẬP
+      ===================================== */}
+
       <section className="border-y border-white/10 bg-zinc-950">
 
         <div className="mx-auto max-w-6xl px-5 py-14">
@@ -377,6 +557,32 @@ useEffect(() => {
               Chọn nhóm tập muốn xem
             </p>
 
+            {checkingAccess ? (
+
+              <p className="mt-3 text-sm text-gray-500">
+                Đang kiểm tra quyền xem...
+              </p>
+
+            ) : isVip ? (
+
+              <p className="mt-3 text-sm font-semibold text-yellow-400">
+                👑 Tài khoản VIP — Bạn có thể xem toàn bộ phim.
+              </p>
+
+            ) : hasMovieAccess ? (
+
+              <p className="mt-3 text-sm font-semibold text-green-400">
+                ✓ Bạn đã mua bộ phim — Có thể xem toàn bộ.
+              </p>
+
+            ) : (
+
+              <p className="mt-3 text-sm text-gray-500">
+                🔒 Tập 20 trở đi: mua bộ 20.000đ hoặc đăng ký VIP.
+              </p>
+
+            )}
+
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -384,18 +590,33 @@ useEffect(() => {
             {episodes.map((episode) => {
 
               const isActive =
-                currentEpisode.id === episode.id;
+                currentEpisode.id ===
+                episode.id;
 
               const isFinal =
-                episode.title === "Tập cuối";
+                episode.title ===
+                "Tập cuối";
+
+              const isLocked =
+                episode.id >= 5 &&
+                !isVip &&
+                !hasMovieAccess;
 
               return (
+
                 <button
                   key={episode.id}
-                  onClick={() => changeEpisode(episode)}
+                  type="button"
+                  onClick={() =>
+                    changeEpisode(
+                      episode
+                    )
+                  }
                   className={`group rounded-2xl border p-5 text-left transition ${
                     isActive
                       ? "border-red-500 bg-red-600/10"
+                      : isLocked
+                      ? "border-white/10 bg-white/[0.02] opacity-75 hover:border-yellow-500/50"
                       : "border-white/10 bg-white/[0.03] hover:border-red-500/50 hover:bg-white/5"
                   }`}
                 >
@@ -405,7 +626,9 @@ useEffect(() => {
                     <div>
 
                       <p className="text-xs font-bold uppercase tracking-widest text-red-500">
-                        {isFinal ? "KẾT THÚC" : `PHẦN ${episode.id}`}
+                        {isFinal
+                          ? "KẾT THÚC"
+                          : `PHẦN ${episode.id}`}
                       </p>
 
                       <h3 className="mt-1 text-xl font-bold">
@@ -418,22 +641,32 @@ useEffect(() => {
                       className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition ${
                         isActive
                           ? "bg-red-600"
+                          : isLocked
+                          ? "bg-yellow-500/10 text-yellow-400"
                           : "bg-white/10 group-hover:bg-red-600"
                       }`}
                     >
-                      ▶
+                      {isLocked
+                        ? "🔒"
+                        : "▶"}
                     </span>
 
                   </div>
 
                   <p className="mt-4 text-sm text-gray-500">
+
                     {isActive
                       ? "● Đang phát"
+                      : isLocked
+                      ? "🔒 Mở khóa"
                       : "Nhấn để xem"}
+
                   </p>
 
                 </button>
+
               );
+
             })}
 
           </div>
@@ -442,7 +675,112 @@ useEffect(() => {
 
       </section>
 
-      {/* INFORMATION */}
+      {/* =====================================
+          MUA RIÊNG BỘ PHIM
+      ===================================== */}
+
+      {!isVip &&
+        !hasMovieAccess && (
+
+          <section className="mx-auto max-w-6xl px-5 py-12">
+
+            <div className="rounded-2xl border border-red-500/30 bg-gradient-to-r from-red-950/40 to-zinc-900 p-7">
+
+              <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+
+                <div>
+
+                  <p className="text-sm font-bold uppercase tracking-widest text-red-500">
+                    MỞ KHÓA PHIM
+                  </p>
+
+                  <h2 className="mt-2 text-2xl font-black">
+                    🎬 Xem trọn bộ{" "}
+                    {MOVIE_TITLE}
+                  </h2>
+
+                  <p className="mt-2 text-sm text-gray-400">
+                    Không cần đăng ký VIP.
+                    Chỉ cần mua riêng bộ phim này.
+                  </p>
+
+                  <p className="mt-3 text-2xl font-black text-red-400">
+                    20.000đ
+                  </p>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleBuyMovie()
+                  }
+                  disabled={creatingOrder}
+                  className="min-w-[220px] rounded-xl bg-red-600 px-7 py-4 font-black transition hover:bg-red-700 disabled:cursor-wait disabled:bg-gray-600"
+                >
+
+                  {creatingOrder
+                    ? "Đang tạo đơn..."
+                    : "🔓 Mua bộ phim — 20.000đ"}
+
+                </button>
+
+              </div>
+
+              <div className="mt-6 border-t border-white/10 pt-5 text-sm text-gray-500">
+
+                👑 Muốn xem tất cả phim trên website?
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      "/tai-khoan"
+                    )
+                  }
+                  className="ml-1 font-bold text-yellow-400 hover:underline"
+                >
+                  Đăng ký VIP
+                </button>
+
+              </div>
+
+            </div>
+
+          </section>
+
+        )}
+
+      {/* =====================================
+          ĐÃ MUA
+      ===================================== */}
+
+      {!isVip &&
+        hasMovieAccess && (
+
+          <section className="mx-auto max-w-6xl px-5 pb-12">
+
+            <div className="rounded-2xl border border-green-500/30 bg-green-950/20 p-6">
+
+              <div className="text-lg font-black text-green-400">
+                ✓ Bạn đã mở khóa bộ phim
+              </div>
+
+              <p className="mt-2 text-sm text-gray-400">
+                Bạn có thể xem toàn bộ các tập của{" "}
+                {MOVIE_TITLE}.
+              </p>
+
+            </div>
+
+          </section>
+
+        )}
+
+      {/* =====================================
+          THÔNG TIN PHIM
+      ===================================== */}
+
       <section className="mx-auto max-w-6xl px-5 py-16">
 
         <div className="grid gap-10 md:grid-cols-[280px_1fr]">
@@ -451,7 +789,7 @@ useEffect(() => {
 
             <img
               src={POSTER}
-              alt="Yêu Đến Mức Cấm Kỵ"
+              alt={MOVIE_TITLE}
               className="h-full w-full object-cover"
             />
 
@@ -464,7 +802,7 @@ useEffect(() => {
             </p>
 
             <h2 className="mt-3 text-3xl font-black md:text-4xl">
-              Yêu Đến Mức Cấm Kỵ
+              {MOVIE_TITLE}
             </h2>
 
             <div className="mt-5 flex flex-wrap gap-2">
@@ -500,9 +838,26 @@ useEffect(() => {
                 📌 Trạng thái
               </p>
 
-              <p className="mt-2 text-sm text-gray-500">
-                Đã cập nhật đầy đủ các tập phim.
-              </p>
+              {isVip ? (
+
+                <p className="mt-2 text-sm font-semibold text-yellow-400">
+                  👑 VIP ACTIVE — Bạn được xem toàn bộ phim.
+                </p>
+
+              ) : hasMovieAccess ? (
+
+                <p className="mt-2 text-sm font-semibold text-green-400">
+                  ✓ Đã mua bộ — Bạn được xem toàn bộ phim này.
+                </p>
+
+              ) : (
+
+                <p className="mt-2 text-sm text-gray-500">
+                  Tập 1–19 miễn phí.
+                  Tập 20 trở đi cần mở khóa.
+                </p>
+
+              )}
 
             </div>
 
@@ -512,7 +867,10 @@ useEffect(() => {
 
       </section>
 
-      {/* FOOTER */}
+      {/* =====================================
+          FOOTER
+      ===================================== */}
+
       <footer className="border-t border-white/10 bg-black">
 
         <div className="mx-auto max-w-6xl px-5 py-10">
@@ -561,6 +919,372 @@ useEffect(() => {
         </div>
 
       </footer>
+
+      {/* =====================================
+          MODAL CHỌN MUA PHIM / VIP
+      ===================================== */}
+
+      {showVipChoice && (
+
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-5 backdrop-blur-sm">
+
+          <div className="relative w-full max-w-[600px] rounded-3xl border border-white/10 bg-[#111] p-7 shadow-2xl">
+
+            {/* ĐÓNG */}
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowVipChoice(false)
+              }
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-xl text-gray-400 transition hover:bg-white/10 hover:text-white"
+            >
+              ×
+            </button>
+
+            {/* TIÊU ĐỀ */}
+
+            <div className="text-center">
+
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-500/10 text-3xl">
+                🔒
+              </div>
+
+              <h2 className="mt-5 text-2xl font-black">
+                Tập phim này đã được khóa
+              </h2>
+
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
+                Bạn có thể mua riêng bộ phim
+                hoặc đăng ký thành viên VIP
+                để xem phim.
+              </p>
+
+            </div>
+
+            {/* 2 LỰA CHỌN */}
+
+            <div className="mt-7 grid gap-4 md:grid-cols-2">
+
+              {/* =================================
+                  MUA RIÊNG
+              ================================= */}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowVipChoice(false);
+                  handleBuyMovie();
+                }}
+                className="group rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-left transition hover:border-red-500 hover:bg-red-500/20"
+              >
+
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-600 text-2xl">
+                  🎬
+                </div>
+
+                <h3 className="mt-4 text-lg font-black">
+                  Mua riêng bộ phim
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-gray-500">
+                  Mở khóa toàn bộ các tập
+                  của bộ phim này.
+                </p>
+
+                <div className="mt-4 text-xl font-black text-red-400">
+                  20.000đ
+                </div>
+
+                <div className="mt-4 rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-black text-white transition group-hover:bg-red-700">
+                  🔓 Mua ngay
+                </div>
+
+              </button>
+
+              {/* =================================
+                  VIP
+              ================================= */}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowVipChoice(false);
+                  router.push(
+                    "/tai-khoan"
+                  );
+                }}
+                className="group rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-5 text-left transition hover:border-yellow-500 hover:bg-yellow-500/20"
+              >
+
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500/20 text-2xl">
+                  👑
+                </div>
+
+                <h3 className="mt-4 text-lg font-black">
+                  Đăng ký thành viên VIP
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-gray-500">
+                  Xem toàn bộ phim trên
+                  Trà Đá Drama trong thời gian VIP.
+                </p>
+
+                <div className="mt-4 text-xl font-black text-yellow-400">
+                  👑 VIP
+                </div>
+
+                <div className="mt-4 rounded-lg bg-yellow-500 px-4 py-3 text-center text-sm font-black text-black transition group-hover:bg-yellow-400">
+                  Đăng ký VIP
+                </div>
+
+              </button>
+
+            </div>
+
+            {/* HỦY */}
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowVipChoice(false)
+              }
+              className="mt-5 w-full rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-gray-400 transition hover:bg-white/10 hover:text-white"
+            >
+              Để sau
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
+
+      {/* =====================================
+          MODAL THANH TOÁN 20K
+      ===================================== */}
+
+      {showPayment && (
+
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/85 p-5 backdrop-blur-sm">
+
+          <div className="relative w-full max-w-[720px] rounded-[22px] border border-white/10 bg-[#111] p-7 shadow-2xl">
+
+            {/* ĐÓNG */}
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowPayment(false)
+              }
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-[#1b1b1b] text-lg text-gray-400 hover:text-white"
+            >
+              ×
+            </button>
+
+            {/* TIÊU ĐỀ */}
+
+            <div className="text-center">
+
+              <div className="text-xs font-extrabold tracking-[2px] text-red-500">
+                TRÀ ĐÁ DRAMA
+              </div>
+
+              <h2 className="mt-2 text-2xl font-black">
+                🎬 Mua bộ phim
+              </h2>
+
+              <div className="mt-1 text-sm text-gray-500">
+                {MOVIE_TITLE}
+              </div>
+
+            </div>
+
+            {/* GIÁ */}
+
+            <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-center">
+
+              <div className="text-sm text-gray-400">
+                Số tiền cần chuyển
+              </div>
+
+              <div className="mt-1 text-4xl font-black text-red-400">
+                20.000đ
+              </div>
+
+            </div>
+
+            {/* QR */}
+
+            <div className="mt-6 flex justify-center">
+
+              <div className="rounded-2xl bg-white p-3">
+
+                <img
+                  src={getQrUrl()}
+                  alt="QR thanh toán mua phim"
+                  className="block h-[270px] w-[270px]"
+                />
+
+              </div>
+
+            </div>
+
+            {/* THÔNG TIN CHUYỂN KHOẢN */}
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-[#171717] p-5">
+
+              <div className="mb-4 text-sm font-black">
+                🏦 Thông tin chuyển khoản
+              </div>
+
+              <div className="space-y-3 text-sm">
+
+                <div>
+
+                  <span className="text-gray-500">
+                    Ngân hàng:{" "}
+                  </span>
+
+                  <strong>
+                    Sacombank
+                  </strong>
+
+                </div>
+
+                <div>
+
+                  <span className="text-gray-500">
+                    Chủ tài khoản:{" "}
+                  </span>
+
+                  <strong>
+                    Lâm Thị Thu Hiền
+                  </strong>
+
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+
+                  <div>
+
+                    <span className="text-gray-500">
+                      Số tài khoản:{" "}
+                    </span>
+
+                    <strong>
+                      070117517142
+                    </strong>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyText(
+                        "070117517142",
+                        "stk"
+                      )
+                    }
+                    className="rounded-lg border border-white/10 bg-[#222] px-3 py-2 text-xs text-gray-300 hover:bg-[#292929]"
+                  >
+
+                    {copied === "stk"
+                      ? "✓ Đã copy"
+                      : "Sao chép"}
+
+                  </button>
+
+                </div>
+
+                <div className="border-t border-white/10 pt-4">
+
+                  <div className="mb-2 text-xs text-gray-500">
+                    Nội dung chuyển khoản
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+
+                    <strong className="text-base tracking-wide text-red-400">
+                      {orderCode}
+                    </strong>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copyText(
+                          orderCode,
+                          "content"
+                        )
+                      }
+                      className="rounded-lg border border-white/10 bg-[#222] px-3 py-2 text-xs text-gray-300 hover:bg-[#292929]"
+                    >
+
+                      {copied === "content"
+                        ? "✓ Đã copy"
+                        : "Sao chép"}
+
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* LƯU Ý */}
+
+            <div className="mt-5 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm leading-7 text-gray-400">
+
+              <strong className="text-yellow-400">
+                📌 Lưu ý:
+              </strong>
+
+              <br />
+
+              Chuyển đúng{" "}
+
+              <strong className="text-white">
+                20.000đ
+              </strong>
+
+              {" "}và ghi đúng mã đơn:
+
+              <strong className="ml-1 text-red-400">
+                {orderCode}
+              </strong>
+
+              <br />
+
+              Sau khi chuyển khoản,
+              admin sẽ kiểm tra và duyệt đơn.
+
+            </div>
+
+            {/* TRẠNG THÁI */}
+
+            <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-gray-500">
+
+              🕐 Đơn mua phim đang ở trạng thái{" "}
+
+              <strong className="text-yellow-400">
+                CHỜ DUYỆT
+              </strong>
+
+              <br />
+
+              Sau khi admin xác nhận thanh toán,
+              bộ phim sẽ được mở khóa cho tài khoản này.
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
 
     </main>
   );

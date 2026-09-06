@@ -1,85 +1,11 @@
 import Link from "next/link";
+import LogoutButton from "./components/LogoutButton";
 
 const POSTER = "/poster-yeu-den-muc-cam-ky.jpg";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#050505] text-white">
-
-      {/* ================= HEADER ================= */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">
-
-        <div className="mx-auto flex h-[70px] max-w-7xl items-center justify-between px-5">
-
-          {/* LOGO */}
-          <Link
-            href="/"
-            className="flex items-center gap-3"
-          >
-
-            <span className="text-3xl">
-              🎬
-            </span>
-
-            <span className="text-xl font-black tracking-tight">
-              TRÀ ĐÁ{" "}
-              <span className="text-red-500">
-                DRAMA
-              </span>
-            </span>
-
-          </Link>
-
-          {/* MENU */}
-          <nav className="hidden items-center gap-8 md:flex">
-
-            <Link
-              href="/"
-              className="relative font-medium text-white"
-            >
-              Trang chủ
-
-              <span className="absolute -bottom-6 left-0 h-0.5 w-full bg-red-500" />
-            </Link>
-
-            <Link
-              href="/phim"
-              className="font-medium text-gray-400 transition hover:text-white"
-            >
-              Phim
-            </Link>
-
-            <Link
-              href="/phim/yeu-den-muc-cam-ky"
-              className="font-medium text-gray-400 transition hover:text-white"
-            >
-              Phim mới
-            </Link>
-
-          </nav>
-
-          {/* SEARCH */}
-          <div className="hidden md:block">
-
-            <div className="flex h-10 w-64 items-center rounded-full border border-white/15 bg-white/5 px-4">
-
-              <input
-                type="text"
-                placeholder="Tìm phim..."
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
-              />
-
-              <span className="text-lg">
-                🔍
-              </span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </header>
 
       {/* ================= HERO ================= */}
       <section className="relative min-h-[680px] overflow-hidden">
