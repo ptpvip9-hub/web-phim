@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 const POSTER = "/poster-yeu-den-muc-cam-ky.jpg";
 
@@ -103,17 +104,69 @@ const episodes = [
 
 export default function YeuDenMucCamKy() {
   const [currentEpisode, setCurrentEpisode] = useState(episodes[0]);
+const [isVip, setIsVip] = useState(false);
+const [checkingVip, setCheckingVip] = useState(true);
 
+useEffect(() => {
+  async function checkVip() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setIsVip(false);
+      setCheckingVip(false);
+      return;
+    }
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("is_vip, vip_expires_at")
+      .eq("user_id", user.id)
+      .single();
+
+    if (
+      data?.is_vip === true &&
+      data?.vip_expires_at &&
+      new Date(data.vip_expires_at) > new Date()
+    ) {
+      setIsVip(true);
+    } else {
+      setIsVip(false);
+    }
+
+    setCheckingVip(false);
+  }
+
+  checkVip();
+}, []);
   const changeEpisode = (episode: (typeof episodes)[number]) => {
-    setCurrentEpisode(episode);
+  // Tập 1-19 miễn phí
+  // Tập 20+ chỉ VIP mới xem được
+  if (episode.id >= 5 && !isVip) {
+  const buy = confirm(
+    "🔒 Nội dung này cần mở khóa.\n\n" +
+    "💰 Giá mua bộ phim: 20.000đ\n\n" +
+    "Bạn có muốn mua quyền xem các tập 20+ không?"
+  );
 
-    setTimeout(() => {
-      document.getElementById("video-player")?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }, 100);
-  };
+  if (buy) {
+    alert("Tính năng thanh toán sẽ được mở ở bước tiếp theo.");
+  }
+
+  return;
+
+  }
+
+  setCurrentEpisode(episode);
+
+  setTimeout(() => {
+    document.getElementById("video-player")?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, 100);
+};
 
   return (
     <main className="min-h-screen bg-[#050505] text-white">
