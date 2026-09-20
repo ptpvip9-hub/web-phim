@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import LogoutButton from "./components/LogoutButton";
 
 type Movie = {
   slug: string;
@@ -157,7 +158,7 @@ export default function Home() {
   }, [watchHistory]);
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white">
+    <main className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#050505] text-white">
       {/* HERO */}
       <section className="relative min-h-[650px] overflow-hidden">
         <div
@@ -319,40 +320,49 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
           {movies.map((movie) => (
             <Link
               key={movie.slug}
               href={movie.href}
-              className="group"
+              className="group block w-full min-w-0"
             >
-              <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-xl">
+              <div className="relative h-[360px] w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl sm:h-[400px]">
+                {/* ẢNH PHỦ 100% CARD */}
                 <img
                   src={movie.poster}
                   alt={movie.title}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                  className="absolute inset-0 z-0 h-full w-full object-cover object-center transition duration-700 group-hover:scale-105"
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+                {/* LỚP PHỦ */}
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/95 via-black/25 to-black/5" />
 
+                {/* BADGE GÓC TRÁI */}
                 {movie.badge && (
-                  <span className="absolute left-3 top-3 rounded-md bg-red-600 px-2.5 py-1 text-[11px] font-black">
+                  <span className="absolute left-4 top-4 z-20 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-black shadow-lg">
                     {movie.badge}
                   </span>
                 )}
 
-                <span className="absolute bottom-3 right-3 rounded-md bg-black/80 px-2.5 py-1 text-xs font-bold backdrop-blur">
+                {/* SỐ TẬP GÓC PHẢI */}
+                <span className="absolute right-4 top-4 z-20 rounded-lg border border-white/20 bg-black/70 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md">
                   {movie.episodes}
                 </span>
 
-                <div className="absolute inset-x-0 bottom-0 p-4">
-                  <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-sm opacity-0 shadow-lg transition group-hover:opacity-100">
-                    ▶
-                  </div>
-                  <h3 className="font-black leading-5">{movie.title}</h3>
-                  <p className="mt-1 text-xs text-gray-300">
+                {/* THÔNG TIN + NÚT PLAY, KHÔNG DÙNG FLEX ĐỂ TRÁNH ĐÈ NHAU */}
+                <div className="absolute inset-x-0 bottom-0 z-20 p-5 sm:p-6">
+                  <h3 className="max-w-[80%] text-xl font-black leading-tight text-white drop-shadow-lg sm:text-2xl">
+                    {movie.title}
+                  </h3>
+
+                  <p className="mt-2 text-sm font-medium text-gray-200 drop-shadow">
                     {movie.genre}
                   </p>
+
+                  <span className="absolute bottom-5 right-5 flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-base font-black text-white shadow-xl transition duration-300 group-hover:scale-110 group-hover:bg-red-500 sm:bottom-6 sm:right-6">
+                    ▶
+                  </span>
                 </div>
               </div>
             </Link>
