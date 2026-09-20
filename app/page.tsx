@@ -49,6 +49,17 @@ const movies: Movie[] = [
     badge: "MỚI",
     genre: "Drama • Ngôn tình",
   },
+  {
+    slug: "hay-de-em-yeu-anh",
+    title: "Hãy Để Em Yêu Anh",
+    poster: "/poster-hay-de-em-yeu-anh.jpg",
+    href: "/phim/hay-de-em-yeu-anh",
+    description:
+      "Một câu chuyện tình cảm đầy cảm xúc với những lựa chọn và rung động khó quên.",
+    episodes: "13 tập",
+    badge: "MỚI",
+    genre: "Drama • Tình cảm",
+  },
 ];
 
 function formatTime(seconds: number) {
@@ -74,7 +85,7 @@ export default function Home() {
   const [watchHistory, setWatchHistory] = useState<WatchItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
-  const featuredMovie = movies[0];
+  const featuredMovie = movies.find((movie) => movie.slug === "yeu-den-muc-cam-ky") ?? movies[0];
 
   useEffect(() => {
     let mounted = true;
@@ -135,7 +146,7 @@ export default function Home() {
   const continueWatching = useMemo(() => {
     return watchHistory
       .map((item) => {
-        const movie = movies.find((m) => m.slug === item.movie_slug);
+        const movie = movies.find((m) => m?.slug === item.movie_slug);
         if (!movie) return null;
 
         return {
@@ -321,7 +332,7 @@ export default function Home() {
         </div>
 
         <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
-          {movies.map((movie) => (
+          {movies.filter(Boolean).map((movie) => (
             <Link
               key={movie.slug}
               href={movie.href}
