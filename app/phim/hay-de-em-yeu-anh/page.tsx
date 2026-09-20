@@ -883,9 +883,9 @@ export default function HayDeEmYeuAnh() {
             </p>
 
             <h1 className="mt-5 font-serif text-5xl font-black leading-tight md:text-7xl">
-              YÊU ĐẾN MỨC
+              HÃY ĐỂ EM
               <br />
-              CẤM KỴ
+              YÊU ANH
             </h1>
 
             <div className="mt-6 flex flex-wrap gap-3 text-sm">
@@ -922,10 +922,9 @@ export default function HayDeEmYeuAnh() {
             </div>
 
             <p className="mt-7 max-w-2xl text-base leading-8 text-gray-300 md:text-lg">
-              Một câu chuyện tình yêu đầy day dứt,
-              nơi những cảm xúc tưởng như không thể
-              lại trở thành một mối tình không thể
-              thoát khỏi.
+              Một câu chuyện tình cảm đầy cảm xúc,
+              với những rung động, lựa chọn và tình yêu
+              không dễ dàng.
             </p>
 
             {/* NÚT XEM + YÊU THÍCH */}
@@ -1434,10 +1433,9 @@ export default function HayDeEmYeuAnh() {
             </div>
 
             <p className="mt-7 leading-8 text-gray-400">
-              Một câu chuyện tình yêu đầy day dứt,
-              nơi những cảm xúc tưởng như không thể
-              lại trở thành một mối tình không thể
-              thoát khỏi.
+              Một câu chuyện tình cảm đầy cảm xúc,
+              với những rung động, lựa chọn và tình yêu
+              không dễ dàng.
             </p>
 
             <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.03] p-5">
