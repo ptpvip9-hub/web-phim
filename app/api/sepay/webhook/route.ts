@@ -1,20 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const sepayApiKey = process.env.SEPAY_API_KEY;
+
+if (!supabaseUrl) {
+  throw new Error("Thiếu NEXT_PUBLIC_SUPABASE_URL");
+}
+
+if (!serviceRoleKey) {
+  throw new Error("Thiếu SUPABASE_SERVICE_ROLE_KEY");
+}
+
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  supabaseUrl,
+  serviceRoleKey,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
 );
+
+function unauthorized() {
+  return NextResponse.json(
+    {
+      success: false,
+      message: "Unauthorized",
+    },
+    { status: 401 }
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
     // =====================================================
-    // 1. KIỂM TRA API KEY SEPAY
+    // 1. KIỂM TRA SEPAY API KEY
     // =====================================================
-    const apiKey = req.headers.get("Authorization");
-    const expectedKey = process.env.SEPAY_API_KEY;
 
-    if (!expectedKey) {
+    if (!sepayApiKey) {
       console.error("Thiếu SEPAY_API_KEY");
 
       return NextResponse.json(
@@ -26,27 +52,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (apiKey !== `Apikey ${expectedKey}`) {
-      console.log("Webhook SePay: API key không hợp lệ");
+    const authorization =
+      req.headers.get("authorization");
 
+    if (
+      !authorization ||
+      authorization !== `Apikey ${sepayApiKey}`
+    ) {
+      console.warn(
+        "Webhook SePay bị từ chối: API key không hợp lệ"
+      );
+
+      return unauthorized();
+    }
+
+    // =====================================================
+    // 2. ĐỌC BODY
+    // =====================================================
+
+    let body: Record<string, unknown>;
+
+    try {
+      body = await req.json();
+    } catch {
       return NextResponse.json(
         {
           success: false,
-          message: "Unauthorized",
+          message: "JSON không hợp lệ",
         },
-        { status: 401 }
+        { status: 400 }
       );
     }
 
     // =====================================================
-    // 2. ĐỌC DỮ LIỆU GIAO DỊCH
+    // 3. LẤY THÔNG TIN CẦN THIẾT
     // =====================================================
-    const body = await req.json();
-
-    console.log("=================================");
-    console.log("SEPAY PAYMENT:");
-    console.log(body);
-    console.log("=================================");
 
     const amount = Number(
       body.transferAmount ??
@@ -66,17 +106,20 @@ export async function POST(req: NextRequest) {
         body.transaction_id ??
         body.transactionId ??
         ""
-    );
+    ).trim();
 
     const transferType = String(
       body.transferType ??
         body.transfer_type ??
         ""
-    ).toLowerCase();
+    )
+      .trim()
+      .toLowerCase();
 
     // =====================================================
-    // 3. CHỈ NHẬN TIỀN VÀO
+    // 4. CHỈ NHẬN GIAO DỊCH TIỀN VÀO
     // =====================================================
+
     if (
       transferType &&
       transferType !== "in" &&
@@ -89,31 +132,46 @@ export async function POST(req: NextRequest) {
     }
 
     // =====================================================
-    // 4. KIỂM TRA DỮ LIỆU
+    // 5. VALIDATE
     // =====================================================
-    if (!amount || !content) {
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Số tiền giao dịch không hợp lệ",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!content) {
       return NextResponse.json({
         success: true,
-        message: "Không đủ dữ liệu giao dịch",
+        message: "Không có nội dung chuyển khoản",
       });
     }
 
+    /*
+     * Transaction ID rất quan trọng để đối chiếu.
+     *
+     * Tuy nhiên SePay có thể gửi một số payload
+     * không có trường id trong môi trường test.
+     *
+     * Vì vậy không chặn cứng ở đây.
+     */
+
     // =====================================================
-    // 5. TÌM MÃ ĐƠN
-    //
-    // VIP:
-    // TRADAVIP3TABCDE
-    //
-    // Phim:
-    // TRADAP...
+    // 6. TÌM MÃ ĐƠN
     // =====================================================
+
     const orderCodeMatch = content.match(
-      /TRADAVIP[A-Z0-9]+|TRADA[A-Z0-9]+/i
+      /TRADAVIP[A-Z0-9]+|TRADAP[A-Z0-9]+/i
     );
 
     if (!orderCodeMatch) {
       console.log(
-        "Không tìm thấy mã đơn:",
+        "Bỏ qua giao dịch không có mã đơn:",
         content
       );
 
@@ -126,22 +184,35 @@ export async function POST(req: NextRequest) {
     const orderCode =
       orderCodeMatch[0].toUpperCase();
 
-    console.log("MÃ ĐƠN:", orderCode);
-    console.log("SỐ TIỀN:", amount);
-    console.log("TRANSACTION ID:", transactionId);
+    console.log(
+      "SePay:",
+      {
+        orderCode,
+        amount,
+        transactionId: transactionId || "N/A",
+      }
+    );
 
     // =====================================================
-    // 6. NẾU LÀ ĐƠN VIP
+    // 7. VIP
     // =====================================================
+
     if (orderCode.startsWith("TRADAVIP")) {
-      console.log("➡️ Phát hiện đơn VIP");
+      console.log(
+        "Xử lý đơn VIP:",
+        orderCode
+      );
 
-      const { data: vipOrder, error: vipOrderError } =
-        await supabaseAdmin
-          .from("vip_orders")
-          .select("*")
-          .eq("order_code", orderCode)
-          .maybeSingle();
+      const {
+        data: vipOrder,
+        error: vipOrderError,
+      } = await supabaseAdmin
+        .from("vip_orders")
+        .select(
+          "id, user_id, package_months, amount, status, order_code"
+        )
+        .eq("order_code", orderCode)
+        .maybeSingle();
 
       if (vipOrderError) {
         console.error(
@@ -152,42 +223,31 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: "Lỗi database khi tìm đơn VIP",
+            message: "Lỗi database",
           },
           { status: 500 }
         );
       }
 
       if (!vipOrder) {
-        console.log(
-          "Không tìm thấy đơn VIP:",
-          orderCode
-        );
-
         return NextResponse.json({
           success: true,
           message: "Không tìm thấy đơn VIP",
         });
       }
 
-      // ---------------------------------------------------
-      // Nếu đã duyệt rồi thì không cấp lại
-      // ---------------------------------------------------
-      if (vipOrder.status === "approved") {
-        return NextResponse.json({
-          success: true,
-          message: "Đơn VIP đã được duyệt trước đó",
-          order_code: orderCode,
-          transaction_id: transactionId,
-        });
-      }
+      // ===================================================
+      // KIỂM TRA SỐ TIỀN TRƯỚC KHI GỌI RPC
+      // ===================================================
 
-      // ---------------------------------------------------
-      // Kiểm tra số tiền
-      // ---------------------------------------------------
-      if (amount < Number(vipOrder.amount)) {
-        console.log(
-          `Sai số tiền VIP. Nhận ${amount}, cần ${vipOrder.amount}`
+      if (amount !== Number(vipOrder.amount)) {
+        console.warn(
+          "Sai số tiền VIP:",
+          {
+            orderCode,
+            received: amount,
+            expected: vipOrder.amount,
+          }
         );
 
         return NextResponse.json({
@@ -197,176 +257,70 @@ export async function POST(req: NextRequest) {
       }
 
       // ===================================================
-      // 7. TÌM VIP HIỆN TẠI CỦA USER
+      // ATOMIC DATABASE TRANSACTION
       // ===================================================
-      const { data: oldVip, error: oldVipError } =
-        await supabaseAdmin
-          .from("user_vip")
-          .select("*")
-          .eq("user_id", vipOrder.user_id)
-          .order("expires_at", {
-            ascending: false,
-          })
-          .limit(1)
-          .maybeSingle();
 
-      if (oldVipError) {
+      const { data: result, error: processError } =
+        await supabaseAdmin.rpc(
+          "process_vip_payment",
+          {
+            p_order_id: vipOrder.id,
+            p_amount: amount,
+          }
+        );
+
+      if (processError) {
         console.error(
-          "Lỗi tìm VIP cũ:",
-          oldVipError
+          "Lỗi xử lý VIP:",
+          processError
         );
 
         return NextResponse.json(
           {
             success: false,
-            message: "Không thể kiểm tra VIP hiện tại",
+            message: "Không thể xử lý thanh toán VIP",
           },
           { status: 500 }
         );
       }
 
-      // ===================================================
-      // 8. TÍNH NGÀY BẮT ĐẦU
-      //
-      // Nếu VIP cũ còn hạn:
-      //   cộng tiếp từ ngày hết hạn cũ.
-      //
-      // Nếu VIP cũ hết hạn:
-      //   tính từ thời điểm hiện tại.
-      // ===================================================
-      const now = new Date();
-
-      let startedAt = now;
-
-      if (
-        oldVip &&
-        oldVip.expires_at &&
-        new Date(oldVip.expires_at) > now
-      ) {
-        startedAt = new Date(
-          oldVip.expires_at
-        );
-      }
-
-      // ===================================================
-      // 9. CỘNG THÊM SỐ THÁNG
-      // ===================================================
-      const expiresAt = new Date(
-        startedAt
-      );
-
-      expiresAt.setMonth(
-        expiresAt.getMonth() +
-          Number(vipOrder.package_months)
-      );
-
-      console.log(
-        "VIP BẮT ĐẦU:",
-        startedAt.toISOString()
-      );
-
-      console.log(
-        "VIP HẾT HẠN:",
-        expiresAt.toISOString()
-      );
-
-      // ===================================================
-      // 10. CẬP NHẬT / TẠO VIP
-      // ===================================================
-      if (oldVip) {
-        const { error: vipUpdateError } =
-          await supabaseAdmin
-            .from("user_vip")
-            .update({
-              package_months:
-                vipOrder.package_months,
-              price: vipOrder.amount,
-              started_at:
-                oldVip.started_at &&
-                new Date(oldVip.expires_at) > now
-                  ? oldVip.started_at
-                  : now.toISOString(),
-              expires_at:
-                expiresAt.toISOString(),
-            })
-            .eq("id", oldVip.id);
-
-        if (vipUpdateError) {
-          console.error(
-            "Lỗi cập nhật VIP:",
-            vipUpdateError
-          );
-
-          return NextResponse.json(
-            {
-              success: false,
-              message:
-                "Không thể cập nhật quyền VIP",
-            },
-            { status: 500 }
-          );
-        }
-      } else {
-        const { error: vipInsertError } =
-          await supabaseAdmin
-            .from("user_vip")
-            .insert({
-              user_id: vipOrder.user_id,
-              package_months:
-                vipOrder.package_months,
-              price: vipOrder.amount,
-              started_at:
-                now.toISOString(),
-              expires_at:
-                expiresAt.toISOString(),
-            });
-
-        if (vipInsertError) {
-          console.error(
-            "Lỗi tạo VIP:",
-            vipInsertError
-          );
-
-          return NextResponse.json(
-            {
-              success: false,
-              message:
-                "Không thể tạo quyền VIP",
-            },
-            { status: 500 }
-          );
-        }
-      }
-
-      // ===================================================
-      // 11. ĐÁNH DẤU ĐƠN VIP ĐÃ THANH TOÁN
-      // ===================================================
-      const { error: vipOrderUpdateError } =
-        await supabaseAdmin
-          .from("vip_orders")
-          .update({
-            status: "approved",
-          })
-          .eq("id", vipOrder.id);
-
-      if (vipOrderUpdateError) {
-        console.error(
-          "Lỗi cập nhật đơn VIP:",
-          vipOrderUpdateError
-        );
-
-        return NextResponse.json(
+      if (!result?.success) {
+        console.warn(
+          "VIP không được duyệt:",
           {
-            success: false,
-            message:
-              "Đã cấp VIP nhưng chưa cập nhật trạng thái đơn",
-          },
-          { status: 500 }
+            orderCode,
+            reason: result?.reason,
+          }
         );
+
+        return NextResponse.json({
+          success: true,
+          message:
+            result?.reason ||
+            "Không thể xử lý đơn VIP",
+        });
+      }
+
+      if (result.already_processed) {
+        return NextResponse.json({
+          success: true,
+          message:
+            "Đơn VIP đã được xử lý trước đó",
+          order_code: orderCode,
+          transaction_id:
+            transactionId || null,
+        });
       }
 
       console.log(
-        `🎉 ĐÃ DUYỆT VIP ${orderCode} - ${vipOrder.package_months} THÁNG`
+        "ĐÃ CẤP VIP:",
+        {
+          orderCode,
+          packageMonths:
+            vipOrder.package_months,
+          expiresAt:
+            result.expires_at,
+        }
       );
 
       return NextResponse.json({
@@ -374,25 +328,39 @@ export async function POST(req: NextRequest) {
         message:
           "Thanh toán VIP thành công",
         order_code: orderCode,
-        transaction_id: transactionId,
+        transaction_id:
+          transactionId || null,
         package_months:
           vipOrder.package_months,
         expires_at:
-          expiresAt.toISOString(),
+          result.expires_at,
       });
     }
 
     // =====================================================
-    // 12. NẾU KHÔNG PHẢI VIP → XỬ LÝ ĐƠN PHIM
+    // 8. MUA PHIM
     // =====================================================
-    console.log("➡️ Phát hiện đơn mua phim");
+
+    if (!orderCode.startsWith("TRADAP")) {
+      return NextResponse.json({
+        success: true,
+        message: "Mã đơn không hợp lệ",
+      });
+    }
+
+    console.log(
+      "Xử lý đơn phim:",
+      orderCode
+    );
 
     const {
       data: movieOrder,
       error: movieOrderError,
     } = await supabaseAdmin
       .from("movie_orders")
-      .select("*")
+      .select(
+        "id, user_id, movie_slug, movie_title, amount, status, order_code"
+      )
       .eq("order_code", orderCode)
       .maybeSingle();
 
@@ -405,46 +373,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Lỗi database khi tìm đơn phim",
+          message: "Lỗi database",
         },
         { status: 500 }
       );
     }
 
     if (!movieOrder) {
-      console.log(
-        "Không tìm thấy đơn phim:",
-        orderCode
-      );
-
       return NextResponse.json({
         success: true,
-        message: "Không tìm thấy đơn hàng",
+        message: "Không tìm thấy đơn phim",
       });
     }
 
     // =====================================================
-    // 13. ĐƠN PHIM ĐÃ DUYỆT
+    // KIỂM TRA SỐ TIỀN CHÍNH XÁC
     // =====================================================
-    if (movieOrder.status === "approved") {
-      return NextResponse.json({
-        success: true,
-        message:
-          "Đơn phim đã được duyệt trước đó",
-        order_code: orderCode,
-        transaction_id: transactionId,
-      });
-    }
 
-    // =====================================================
-    // 14. KIỂM TRA TIỀN ĐƠN PHIM
-    // =====================================================
-    if (
-      amount < Number(movieOrder.amount)
-    ) {
-      console.log(
-        `Sai số tiền phim. Nhận ${amount}, cần ${movieOrder.amount}`
+    if (amount !== Number(movieOrder.amount)) {
+      console.warn(
+        "Sai số tiền mua phim:",
+        {
+          orderCode,
+          received: amount,
+          expected: movieOrder.amount,
+        }
       );
 
       return NextResponse.json({
@@ -454,83 +407,80 @@ export async function POST(req: NextRequest) {
     }
 
     // =====================================================
-    // 15. CẤP QUYỀN XEM PHIM
+    // ATOMIC DATABASE TRANSACTION
     // =====================================================
+
     const {
-      error: accessError,
-    } = await supabaseAdmin
-      .from("user_movie_access")
-      .upsert(
+      data: result,
+      error: processError,
+    } = await supabaseAdmin.rpc(
+      "process_movie_payment",
+      {
+        p_order_id: movieOrder.id,
+        p_amount: amount,
+      }
+    );
+
+    if (processError) {
+      console.error(
+        "Lỗi xử lý đơn phim:",
+        processError
+      );
+
+      return NextResponse.json(
         {
-          user_id: movieOrder.user_id,
-          movie_slug: movieOrder.movie_slug,
-          price: movieOrder.amount,
-          started_at:
-            new Date().toISOString(),
+          success: false,
+          message:
+            "Không thể xử lý thanh toán mua phim",
         },
+        { status: 500 }
+      );
+    }
+
+    if (!result?.success) {
+      console.warn(
+        "Đơn phim không được duyệt:",
         {
-          onConflict:
-            "user_id,movie_slug",
+          orderCode,
+          reason: result?.reason,
         }
       );
 
-    if (accessError) {
-      console.error(
-        "Lỗi cấp quyền phim:",
-        accessError
-      );
-
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Không thể cấp quyền xem phim",
-        },
-        { status: 500 }
-      );
+      return NextResponse.json({
+        success: true,
+        message:
+          result?.reason ||
+          "Không thể xử lý đơn phim",
+      });
     }
 
-    // =====================================================
-    // 16. ĐÁNH DẤU ĐƠN PHIM ĐÃ THANH TOÁN
-    // =====================================================
-    const {
-      error: movieUpdateError,
-    } = await supabaseAdmin
-      .from("movie_orders")
-      .update({
-        status: "approved",
-      })
-      .eq("id", movieOrder.id);
-
-    if (movieUpdateError) {
-      console.error(
-        "Lỗi cập nhật đơn phim:",
-        movieUpdateError
-      );
-
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Đã cấp quyền nhưng chưa cập nhật đơn",
-        },
-        { status: 500 }
-      );
+    if (result.already_processed) {
+      return NextResponse.json({
+        success: true,
+        message:
+          "Đơn phim đã được xử lý trước đó",
+        order_code: orderCode,
+        transaction_id:
+          transactionId || null,
+      });
     }
 
     console.log(
-      `🎬 ĐÃ DUYỆT ĐƠN PHIM ${orderCode} - ${movieOrder.movie_title}`
+      "ĐÃ MỞ KHÓA PHIM:",
+      {
+        orderCode,
+        movie:
+          movieOrder.movie_title,
+      }
     );
 
-    // =====================================================
-    // 17. TRẢ KẾT QUẢ CHO SEPAY
-    // =====================================================
     return NextResponse.json({
       success: true,
       message:
         "Thanh toán mua phim thành công",
       order_code: orderCode,
-      transaction_id: transactionId,
+      transaction_id:
+        transactionId || null,
     });
   } catch (error) {
     console.error(

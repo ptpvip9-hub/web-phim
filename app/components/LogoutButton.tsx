@@ -34,8 +34,10 @@ export default function LogoutButton() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
+
     setEmail(null);
     setOpen(false);
+
     window.location.href = "/";
   }
 
@@ -43,13 +45,14 @@ export default function LogoutButton() {
     return null;
   }
 
-  // =========================
+  // ==========================================
   // CHƯA ĐĂNG NHẬP
-  // =========================
+  // ==========================================
   if (!email) {
     return (
       <Link
         href="/dang-nhap"
+        className="auth-login-link"
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -71,11 +74,12 @@ export default function LogoutButton() {
     );
   }
 
-  // =========================
+  // ==========================================
   // ĐÃ ĐĂNG NHẬP
-  // =========================
+  // ==========================================
   return (
     <div
+      className="auth-controls"
       style={{
         display: "flex",
         alignItems: "center",
@@ -84,10 +88,13 @@ export default function LogoutButton() {
         whiteSpace: "nowrap",
       }}
     >
-      {/* TÀI KHOẢN */}
+      {/* ======================================
+          NÚT TÀI KHOẢN
+      ====================================== */}
       <button
+        className="auth-account-button"
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((prev) => !prev)}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -106,6 +113,7 @@ export default function LogoutButton() {
         <span>👤</span>
 
         <span
+          className="auth-email"
           style={{
             maxWidth: "160px",
             overflow: "hidden",
@@ -127,8 +135,11 @@ export default function LogoutButton() {
         </span>
       </button>
 
-      {/* ĐĂNG XUẤT */}
+      {/* ======================================
+          NÚT ĐĂNG XUẤT BÊN NGOÀI
+      ====================================== */}
       <button
+        className="auth-logout-button"
         type="button"
         onClick={handleLogout}
         style={{
@@ -150,23 +161,28 @@ export default function LogoutButton() {
         🚪 Đăng xuất
       </button>
 
-      {/* MENU TÀI KHOẢN */}
+      {/* ======================================
+          MENU TÀI KHOẢN
+      ====================================== */}
       {open && (
         <div
+          className="auth-menu"
           style={{
             position: "absolute",
             top: "calc(100% + 10px)",
             right: "95px",
-            width: "230px",
+            width: "240px",
             background: "#151515",
             border: "1px solid #333",
             borderRadius: "14px",
             padding: "8px",
             boxShadow: "0 20px 50px rgba(0,0,0,0.7)",
-            zIndex: 100,
+            zIndex: 1000,
           }}
         >
-          {/* THÔNG TIN */}
+          {/* ==================================
+              THÔNG TIN TÀI KHOẢN
+          ================================== */}
           <div
             style={{
               padding: "12px",
@@ -191,61 +207,83 @@ export default function LogoutButton() {
                 marginTop: "5px",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
+              title={email}
             >
               {email}
             </div>
           </div>
 
-          {/* TÀI KHOẢN */}
+          {/* ==================================
+              TRANG TÀI KHOẢN
+          ================================== */}
           <Link
             href="/tai-khoan"
             onClick={() => setOpen(false)}
-            style={{
-              display: "block",
-              padding: "11px 12px",
-              borderRadius: "9px",
-              color: "#ddd",
-              textDecoration: "none",
-              fontSize: "14px",
-            }}
+            style={menuItemStyle}
           >
             👤 Trang tài khoản
           </Link>
 
-          {/* YÊU THÍCH */}
+          {/* ==================================
+              ĐỔI MẬT KHẨU
+          ================================== */}
+          <Link
+            href="/doi-mat-khau"
+            onClick={() => setOpen(false)}
+            style={menuItemStyle}
+          >
+            🔐 Đổi mật khẩu
+          </Link>
+
+          {/* ==================================
+              PHIM CỦA TÔI
+          ================================== */}
+          <Link
+            href="/phim-cua-toi"
+            onClick={() => setOpen(false)}
+            style={menuItemStyle}
+          >
+            🎬 Phim của tôi
+          </Link>
+
+          {/* ==================================
+              LỊCH SỬ GIAO DỊCH
+          ================================== */}
+          <Link
+            href="/lich-su-giao-dich"
+            onClick={() => setOpen(false)}
+            style={menuItemStyle}
+          >
+            💳 Lịch sử giao dịch
+          </Link>
+
+          {/* ==================================
+              YÊU THÍCH
+          ================================== */}
           <Link
             href="/yeu-thich"
             onClick={() => setOpen(false)}
-            style={{
-              display: "block",
-              padding: "11px 12px",
-              borderRadius: "9px",
-              color: "#ddd",
-              textDecoration: "none",
-              fontSize: "14px",
-            }}
+            style={menuItemStyle}
           >
             ❤️ Yêu thích
           </Link>
 
-          {/* LỊCH SỬ */}
+          {/* ==================================
+              LỊCH SỬ XEM
+          ================================== */}
           <Link
             href="/lich-su"
             onClick={() => setOpen(false)}
-            style={{
-              display: "block",
-              padding: "11px 12px",
-              borderRadius: "9px",
-              color: "#ddd",
-              textDecoration: "none",
-              fontSize: "14px",
-            }}
+            style={menuItemStyle}
           >
             🕘 Lịch sử xem
           </Link>
 
-          {/* ĐĂNG XUẤT TRONG MENU */}
+          {/* ==================================
+              ĐĂNG XUẤT TRONG MENU
+          ================================== */}
           <div
             style={{
               borderTop: "1px solid #292929",
@@ -277,3 +315,15 @@ export default function LogoutButton() {
     </div>
   );
 }
+
+// ==========================================
+// STYLE CHO CÁC ITEM TRONG MENU
+// ==========================================
+const menuItemStyle = {
+  display: "block",
+  padding: "11px 12px",
+  borderRadius: "9px",
+  color: "#ddd",
+  textDecoration: "none",
+  fontSize: "14px",
+};

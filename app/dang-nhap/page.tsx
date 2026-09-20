@@ -12,7 +12,8 @@ export default function DangNhapPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -25,10 +26,17 @@ export default function DangNhapPage() {
     setLoading(true);
     setMessage("");
 
-    // =========================
+    // ==========================================
     // ĐĂNG KÝ
-    // =========================
+    // ==========================================
     if (isRegister) {
+      // Kiểm tra email
+      if (!email.trim()) {
+        setMessage("Vui lòng nhập email.");
+        setLoading(false);
+        return;
+      }
+
       // Kiểm tra mật khẩu
       if (password.length < 6) {
         setMessage("Mật khẩu phải có ít nhất 6 ký tự.");
@@ -70,16 +78,18 @@ export default function DangNhapPage() {
       setPassword("");
       setConfirmPassword("");
       setLoading(false);
+
       return;
     }
 
-    // =========================
+    // ==========================================
     // ĐĂNG NHẬP
-    // =========================
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
+    // ==========================================
+    const { data, error } =
+      await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
     if (error) {
       console.error("LOGIN ERROR:", error);
@@ -96,9 +106,9 @@ export default function DangNhapPage() {
       return;
     }
 
-    // =========================
+    // ==========================================
     // ĐĂNG NHẬP THÀNH CÔNG
-    // =========================
+    // ==========================================
     if (data.session) {
       window.location.href = "/";
       return;
@@ -106,6 +116,21 @@ export default function DangNhapPage() {
 
     setMessage("Không thể đăng nhập. Vui lòng thử lại.");
     setLoading(false);
+  }
+
+  // ==========================================
+  // CHUYỂN ĐĂNG NHẬP / ĐĂNG KÝ
+  // ==========================================
+  function switchMode() {
+    setIsRegister(!isRegister);
+
+    setMessage("");
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   }
 
   return (
@@ -123,7 +148,10 @@ export default function DangNhapPage() {
         boxSizing: "border-box",
       }}
     >
-      {/* ÁNH SÁNG TRANG TRÍ */}
+      {/* ========================================
+          ÁNH SÁNG TRANG TRÍ
+      ======================================== */}
+
       <div
         style={{
           position: "fixed",
@@ -152,7 +180,10 @@ export default function DangNhapPage() {
         }}
       />
 
-      {/* TRANG CHỦ */}
+      {/* ========================================
+          TRANG CHỦ
+      ======================================== */}
+
       <Link
         href="/"
         style={{
@@ -171,7 +202,10 @@ export default function DangNhapPage() {
         ← Trang chủ
       </Link>
 
-      {/* KHUNG */}
+      {/* ========================================
+          KHUNG ĐĂNG NHẬP / ĐĂNG KÝ
+      ======================================== */}
+
       <div
         style={{
           width: "100%",
@@ -188,7 +222,10 @@ export default function DangNhapPage() {
           zIndex: 1,
         }}
       >
-        {/* LOGO */}
+        {/* ======================================
+            LOGO
+        ====================================== */}
+
         <div
           style={{
             textAlign: "center",
@@ -211,12 +248,20 @@ export default function DangNhapPage() {
               fontWeight: "900",
             }}
           >
-            <span style={{ color: "white" }}>TRÀ ĐÁ </span>
-            <span style={{ color: "#e50914" }}>DRAMA</span>
+            <span style={{ color: "white" }}>
+              TRÀ ĐÁ{" "}
+            </span>
+
+            <span style={{ color: "#e50914" }}>
+              DRAMA
+            </span>
           </h1>
         </div>
 
-        {/* TIÊU ĐỀ */}
+        {/* ======================================
+            TIÊU ĐỀ
+        ====================================== */}
+
         <p
           style={{
             textAlign: "center",
@@ -232,7 +277,10 @@ export default function DangNhapPage() {
         </p>
 
         <form onSubmit={handleSubmit}>
-          {/* EMAIL */}
+          {/* ====================================
+              EMAIL
+          ==================================== */}
+
           <label
             style={{
               display: "block",
@@ -252,6 +300,7 @@ export default function DangNhapPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
+            disabled={loading}
             style={{
               width: "100%",
               boxSizing: "border-box",
@@ -266,7 +315,10 @@ export default function DangNhapPage() {
             }}
           />
 
-          {/* MẬT KHẨU */}
+          {/* ====================================
+              MẬT KHẨU
+          ==================================== */}
+
           <label
             style={{
               display: "block",
@@ -282,19 +334,26 @@ export default function DangNhapPage() {
           <div
             style={{
               position: "relative",
-              marginBottom: isRegister ? "21px" : "26px",
+              marginBottom: isRegister
+                ? "21px"
+                : "8px",
             }}
           >
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Ít nhất 6 ký tự"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
               required
               minLength={6}
               autoComplete={
-                isRegister ? "new-password" : "current-password"
+                isRegister
+                  ? "new-password"
+                  : "current-password"
               }
+              disabled={loading}
               style={{
                 width: "100%",
                 boxSizing: "border-box",
@@ -308,27 +367,71 @@ export default function DangNhapPage() {
               }}
             />
 
+            {/* NÚT MỞ MẮT */}
+
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() =>
+                setShowPassword(
+                  !showPassword
+                )
+              }
+              disabled={loading}
               style={{
                 position: "absolute",
                 right: "12px",
                 top: "50%",
-                transform: "translateY(-50%)",
+                transform:
+                  "translateY(-50%)",
                 border: "none",
                 background: "transparent",
                 cursor: "pointer",
                 fontSize: "18px",
                 padding: "5px",
               }}
-              title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              title={
+                showPassword
+                  ? "Ẩn mật khẩu"
+                  : "Hiện mật khẩu"
+              }
             >
-              {showPassword ? "🙈" : "👁️"}
+              {showPassword
+                ? "🙈"
+                : "👁️"}
             </button>
           </div>
 
-          {/* NHẬP LẠI MẬT KHẨU - CHỈ HIỆN KHI ĐĂNG KÝ */}
+          {/* ====================================
+              QUÊN MẬT KHẨU
+              CHỈ HIỆN KHI ĐĂNG NHẬP
+          ==================================== */}
+
+          {!isRegister && (
+            <div
+              style={{
+                textAlign: "right",
+                marginBottom: "22px",
+              }}
+            >
+              <Link
+                href="/quen-mat-khau"
+                style={{
+                  color: "#e50914",
+                  textDecoration: "none",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                }}
+              >
+                Quên mật khẩu?
+              </Link>
+            </div>
+          )}
+
+          {/* ====================================
+              NHẬP LẠI MẬT KHẨU
+              CHỈ ĐĂNG KÝ
+          ==================================== */}
+
           {isRegister && (
             <>
               <label
@@ -346,30 +449,38 @@ export default function DangNhapPage() {
               <div
                 style={{
                   position: "relative",
-                  marginBottom: "26px",
+                  marginBottom: "8px",
                 }}
               >
                 <input
                   type={
-                    showConfirmPassword ? "text" : "password"
+                    showConfirmPassword
+                      ? "text"
+                      : "password"
                   }
                   placeholder="Nhập lại mật khẩu"
                   value={confirmPassword}
                   onChange={(e) =>
-                    setConfirmPassword(e.target.value)
+                    setConfirmPassword(
+                      e.target.value
+                    )
                   }
                   required
                   minLength={6}
                   autoComplete="new-password"
+                  disabled={loading}
                   style={{
                     width: "100%",
                     boxSizing: "border-box",
-                    padding: "14px 48px 14px 15px",
+                    padding:
+                      "14px 48px 14px 15px",
                     borderRadius: "11px",
                     border:
-                      confirmPassword &&
-                      password !== confirmPassword
-                        ? "1px solid #e50914"
+                      confirmPassword
+                        ? password ===
+                          confirmPassword
+                          ? "1px solid #22c55e"
+                          : "1px solid #e50914"
                         : "1px solid #333",
                     outline: "none",
                     background: "#1b1b1b",
@@ -378,16 +489,22 @@ export default function DangNhapPage() {
                   }}
                 />
 
+                {/* NÚT MẮT */}
+
                 <button
                   type="button"
                   onClick={() =>
-                    setShowConfirmPassword(!showConfirmPassword)
+                    setShowConfirmPassword(
+                      !showConfirmPassword
+                    )
                   }
+                  disabled={loading}
                   style={{
                     position: "absolute",
                     right: "12px",
                     top: "50%",
-                    transform: "translateY(-50%)",
+                    transform:
+                      "translateY(-50%)",
                     border: "none",
                     background: "transparent",
                     cursor: "pointer",
@@ -400,31 +517,36 @@ export default function DangNhapPage() {
                       : "Hiện mật khẩu"
                   }
                 >
-                  {showConfirmPassword ? "🙈" : "👁️"}
+                  {showConfirmPassword
+                    ? "🙈"
+                    : "👁️"}
                 </button>
               </div>
 
-              {/* BÁO SAI MẬT KHẨU */}
+              {/* KIỂM TRA MẬT KHẨU */}
+
               {confirmPassword &&
-                password !== confirmPassword && (
+                password !==
+                  confirmPassword && (
                   <div
                     style={{
-                      marginTop: "-18px",
+                      marginTop: "6px",
                       marginBottom: "20px",
                       color: "#ff7777",
                       fontSize: "13px",
                     }}
                   >
-                    ⚠️ Mật khẩu nhập lại không khớp
+                    ✕ Mật khẩu nhập lại
+                    không khớp
                   </div>
                 )}
 
-              {/* BÁO ĐÚNG MẬT KHẨU */}
               {confirmPassword &&
-                password === confirmPassword && (
+                password ===
+                  confirmPassword && (
                   <div
                     style={{
-                      marginTop: "-18px",
+                      marginTop: "6px",
                       marginBottom: "20px",
                       color: "#4ade80",
                       fontSize: "13px",
@@ -436,7 +558,10 @@ export default function DangNhapPage() {
             </>
           )}
 
-          {/* NÚT */}
+          {/* ====================================
+              NÚT ĐĂNG NHẬP / ĐĂNG KÝ
+          ==================================== */}
+
           <button
             type="submit"
             disabled={loading}
@@ -451,7 +576,9 @@ export default function DangNhapPage() {
               color: "white",
               fontWeight: "800",
               fontSize: "15px",
-              cursor: loading ? "not-allowed" : "pointer",
+              cursor: loading
+                ? "not-allowed"
+                : "pointer",
               boxShadow: loading
                 ? "none"
                 : "0 8px 25px rgba(229,9,20,0.25)",
@@ -465,7 +592,10 @@ export default function DangNhapPage() {
           </button>
         </form>
 
-        {/* THÔNG BÁO */}
+        {/* ====================================
+            THÔNG BÁO
+        ==================================== */}
+
         {message && (
           <div
             style={{
@@ -475,9 +605,12 @@ export default function DangNhapPage() {
               background: "#1d1d1d",
               border: "1px solid #333",
               textAlign: "center",
-              color: message.includes("thành công")
-                ? "#4ade80"
-                : "#ff7777",
+              color:
+                message.includes(
+                  "thành công"
+                )
+                  ? "#4ade80"
+                  : "#ff7777",
               fontSize: "14px",
               lineHeight: 1.5,
             }}
@@ -486,7 +619,10 @@ export default function DangNhapPage() {
           </div>
         )}
 
-        {/* ĐỔI ĐĂNG NHẬP / ĐĂNG KÝ */}
+        {/* ====================================
+            CHUYỂN ĐĂNG NHẬP / ĐĂNG KÝ
+        ==================================== */}
+
         <div
           style={{
             textAlign: "center",
@@ -497,31 +633,36 @@ export default function DangNhapPage() {
             fontSize: "14px",
           }}
         >
-          {isRegister ? "Đã có tài khoản?" : "Chưa có tài khoản?"}
+          {isRegister
+            ? "Đã có tài khoản?"
+            : "Chưa có tài khoản?"}
 
           <button
             type="button"
-            onClick={() => {
-              setIsRegister(!isRegister);
-              setMessage("");
-              setPassword("");
-              setConfirmPassword("");
-            }}
+            onClick={switchMode}
+            disabled={loading}
             style={{
               marginLeft: "7px",
               border: "none",
               background: "none",
               color: "#e50914",
-              cursor: "pointer",
+              cursor: loading
+                ? "not-allowed"
+                : "pointer",
               fontWeight: "800",
               fontSize: "14px",
             }}
           >
-            {isRegister ? "Đăng nhập" : "Đăng ký ngay"}
+            {isRegister
+              ? "Đăng nhập"
+              : "Đăng ký ngay"}
           </button>
         </div>
 
-        {/* FOOTER */}
+        {/* ====================================
+            FOOTER
+        ==================================== */}
+
         <p
           style={{
             textAlign: "center",

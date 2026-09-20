@@ -52,6 +52,7 @@ export default function Header() {
 
   return (
     <header
+      className="site-header"
       style={{
         position: "sticky",
         top: 0,
@@ -62,6 +63,7 @@ export default function Header() {
       }}
     >
       <div
+        className="site-header-inner"
         style={{
           maxWidth: "1400px",
           height: "78px",
@@ -76,6 +78,7 @@ export default function Header() {
         {/* LOGO */}
         <Link
           href="/"
+          className="site-logo"
           style={{
             display: "flex",
             alignItems: "center",
@@ -94,6 +97,7 @@ export default function Header() {
           </span>
 
           <span
+            className="site-logo-text"
             style={{
               display: "inline-block",
               fontSize: "24px",
@@ -125,6 +129,7 @@ export default function Header() {
 
         {/* MENU */}
         <nav
+          className="site-nav"
           style={{
             display: "flex",
             alignItems: "center",
@@ -173,10 +178,11 @@ export default function Header() {
         </nav>
 
         {/* KHOẢNG TRỐNG */}
-        <div style={{ flex: 1 }} />
+        <div className="site-header-spacer" style={{ flex: 1 }} />
 
         {/* TÌM KIẾM */}
         <div
+          className="site-search"
           style={{
             position: "relative",
             width: "270px",
@@ -329,6 +335,7 @@ export default function Header() {
 
         {/* TÀI KHOẢN */}
         <div
+          className="site-account"
           style={{
             flexShrink: 0,
             display: "flex",

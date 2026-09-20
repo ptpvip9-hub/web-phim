@@ -24,3 +24,189 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* =========================================================
+   RESPONSIVE GLOBAL — KHÔNG CHO WEBSITE TRÀ ĐÁ DRAMA TRÀN NGANG
+   ========================================================= */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+}
+
+img,
+video,
+canvas,
+svg,
+iframe {
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+input,
+textarea,
+select,
+button {
+  max-width: 100%;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+a {
+  overflow-wrap: anywhere;
+}
+
+/* Header dùng inline style nên responsive được xử lý bằng class chung. */
+.site-header {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.site-header-inner {
+  width: 100%;
+  min-width: 0;
+}
+
+.site-logo,
+.site-nav,
+.site-search,
+.site-account {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .site-header-inner {
+    height: 64px !important;
+    padding: 0 12px !important;
+    gap: 8px !important;
+  }
+
+  .site-logo {
+    gap: 6px !important;
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .site-logo > span:first-child {
+    font-size: 22px !important;
+  }
+
+  .site-logo-text {
+    min-width: 0;
+    font-size: 17px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .site-logo-text > span:last-child {
+    margin-left: 3px !important;
+  }
+
+  .site-nav,
+  .site-header-spacer {
+    display: none !important;
+  }
+
+  .site-search {
+    width: auto !important;
+    flex: 1 1 auto !important;
+    min-width: 70px !important;
+    max-width: 145px !important;
+    margin-left: auto;
+  }
+
+  .site-search input {
+    height: 40px !important;
+    padding: 0 38px 0 12px !important;
+    font-size: 13px !important;
+  }
+
+  .site-search button {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 16px !important;
+  }
+
+  .site-account {
+    flex: 0 0 auto !important;
+    max-width: 42px !important;
+  }
+
+  .auth-controls {
+    max-width: 42px !important;
+  }
+
+  .auth-login-link,
+  .auth-account-button {
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border-radius: 10px !important;
+    font-size: 0 !important;
+  }
+
+  .auth-login-link::first-letter,
+  .auth-account-button::first-letter {
+    font-size: 18px;
+  }
+
+  .auth-email,
+  .auth-account-button > span:not(:first-child) {
+    display: none !important;
+  }
+
+  .auth-logout-button {
+    display: none !important;
+  }
+
+  .auth-menu {
+    position: fixed !important;
+    top: 68px !important;
+    right: 10px !important;
+    width: min(260px, calc(100vw - 20px)) !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+
+  /* Các section có px-5 vẫn giữ khoảng cách đẹp nhưng không thể vượt viewport. */
+  main,
+  section,
+  footer {
+    max-width: 100%;
+  }
+
+  /* Tránh tiêu đề/chuỗi dài tạo scroll ngang trên điện thoại. */
+  .break-long-text,
+  code,
+  pre {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+}
