@@ -5,13 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-const POSTER = "/poster-chap-niem-tram-hoang.jpg";
+const POSTER = "/poster-yeu-den-muc-cam-ky.jpg";
 
 const R2_BASE =
-  "https://pub-189653ef3ebf47d2b0987a0944a4e8ac.r2.dev/chap-niem-tram-hoang";
+  "https://pub-189653ef3ebf47d2b0987a0944a4e8ac.r2.dev/yeu-den-muc-cam-ky";
 
-const MOVIE_SLUG = "chap-niem-tram-hoang";
-const MOVIE_TITLE = "Chấp Niệm Trầm Hoang";
+const MOVIE_SLUG = "yeu-den-muc-cam-ky";
+const MOVIE_TITLE = "Yêu Đến Mức Cấm Kỵ";
 const MOVIE_PRICE = 15000;
 
 type Episode = {
@@ -20,15 +20,26 @@ type Episode = {
   video: string;
 };
 
-const episodes = Array.from({ length: 14 }, (_, index) => {
-  const episode = index + 1;
-
-  return {
-    id: episode,
-    title: `Phần ${episode}`,
-    video: `${R2_BASE}/phan-${episode}.mp4`,
-  };
-});
+const episodes = [
+  { id: 1, title: "Tập 1–5", video: `${R2_BASE}/tap1-5.mp4` },
+  { id: 2, title: "Tập 6–10", video: `${R2_BASE}/tap6-10.mp4` },
+  { id: 3, title: "Tập 11–14", video: `${R2_BASE}/tap11-14.mp4` },
+  { id: 4, title: "Tập 15–19", video: `${R2_BASE}/tap15-19.mp4` },
+  { id: 5, title: "Tập 20–24", video: `${R2_BASE}/tap20-24.mp4` },
+  { id: 6, title: "Tập 25–27", video: `${R2_BASE}/tap25-27.mp4` },
+  { id: 7, title: "Tập 28–30", video: `${R2_BASE}/tap28-30.mp4` },
+  { id: 8, title: "Tập 31–34", video: `${R2_BASE}/tap31-34.mp4` },
+  { id: 9, title: "Tập 35–38", video: `${R2_BASE}/tap35-38.mp4` },
+  { id: 10, title: "Tập 39–42", video: `${R2_BASE}/tap39-42.mp4` },
+  { id: 11, title: "Tập 43–45", video: `${R2_BASE}/tap43-45.mp4` },
+  { id: 12, title: "Tập 46–51", video: `${R2_BASE}/tap46-51.mp4` },
+  { id: 13, title: "Tập 52–57", video: `${R2_BASE}/tap52-57.mp4` },
+  { id: 14, title: "Tập 58–62", video: `${R2_BASE}/tap58-62.mp4` },
+  { id: 15, title: "Tập 63–66", video: `${R2_BASE}/tap63-66.mp4` },
+  { id: 16, title: "Tập 67–69", video: `${R2_BASE}/tap67-69.mp4` },
+  { id: 17, title: "Tập 70–75", video: `${R2_BASE}/tap70-75.mp4` },
+  { id: 18, title: "Tập cuối", video: `${R2_BASE}/tap-cuoi.mp4` },
+];
 
 type Comment = {
   id: number;
@@ -893,7 +904,7 @@ export default function YeuDenMucCamKy() {
               </span>
 
               <span className="rounded-md bg-white/10 px-3 py-1.5">
-                14 PHẦN
+                75+ TẬP
               </span>
 
               <span className="rounded-md bg-white/10 px-3 py-1.5">
@@ -979,7 +990,7 @@ export default function YeuDenMucCamKy() {
             </p>
 
             <h2 className="mt-2 text-3xl font-black">
-              Chấp Niệm Trầm Hoang
+              Yêu Đến Mức Cấm Kỵ
             </h2>
           </div>
 
@@ -1071,7 +1082,7 @@ export default function YeuDenMucCamKy() {
               </p>
             ) : (
               <p className="mt-3 text-sm text-gray-500">
-                🔒 Phần 5 trở đi: mua bộ 15.000đ hoặc đăng ký VIP.
+                🔒 Tập 20 trở đi: mua bộ 15.000đ hoặc đăng ký VIP.
               </p>
             )}
 
@@ -1084,7 +1095,8 @@ export default function YeuDenMucCamKy() {
               const isActive =
                 currentEpisode.id === episode.id;
 
-              const isFinal = false;
+              const isFinal =
+                episode.title === "Tập cuối";
 
               const isLocked =
                 episode.id >= 5 &&
@@ -1331,7 +1343,7 @@ export default function YeuDenMucCamKy() {
                 type="button"
                 onClick={handleBuyMovie}
                 disabled={creatingOrder}
-                className="w-full max-w-full rounded-xl bg-red-600 px-5 py-4 font-black transition hover:bg-red-700 disabled:cursor-wait disabled:bg-gray-600 md:w-auto md:min-w-[220px]"
+                className="min-w-[220px] rounded-xl bg-red-600 px-7 py-4 font-black transition hover:bg-red-700 disabled:cursor-wait disabled:bg-gray-600"
               >
                 {creatingOrder
                   ? "Đang tạo đơn..."
@@ -1417,7 +1429,7 @@ export default function YeuDenMucCamKy() {
               </span>
 
               <span className="rounded-md bg-white/5 px-3 py-2 text-sm text-gray-300">
-                📺 14 phần
+                📺 75+ tập
               </span>
 
               <span className="rounded-md bg-white/5 px-3 py-2 text-sm text-gray-300">
@@ -1449,8 +1461,8 @@ export default function YeuDenMucCamKy() {
                 </p>
               ) : (
                 <p className="mt-2 text-sm text-gray-500">
-                  Phần 1–4 miễn phí.
-                  Phần 5 trở đi cần mở khóa.
+                  Tập 1–19 miễn phí.
+                  Tập 20 trở đi cần mở khóa.
                 </p>
               )}
 
@@ -1516,7 +1528,7 @@ export default function YeuDenMucCamKy() {
       {showVipChoice && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-5 backdrop-blur-sm">
 
-          <div className="relative w-full max-w-[600px] max-h-[92vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#111] p-5 shadow-2xl sm:p-7">
+          <div className="relative w-full max-w-[600px] rounded-3xl border border-white/10 bg-[#111] p-7 shadow-2xl">
 
             <button
               type="button"
@@ -1633,7 +1645,7 @@ export default function YeuDenMucCamKy() {
       {showPayment && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/90 p-5 backdrop-blur-sm">
 
-          <div className="relative w-full max-w-[720px] max-h-[92vh] overflow-y-auto rounded-[22px] border border-white/10 bg-[#111] p-5 shadow-2xl sm:p-7">
+          <div className="relative w-full max-w-[720px] rounded-[22px] border border-white/10 bg-[#111] p-7 shadow-2xl">
 
             {paymentStatus === "approved" && (
               <button
