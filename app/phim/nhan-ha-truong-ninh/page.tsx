@@ -689,7 +689,7 @@ export default function NhanHaTruongNinh() {
   const changeEpisode = async (episode: Episode) => {
     if (checkingAccess) return;
 
-    const isLocked = episode.id >= 5;
+    const isLocked = episode.id >= 9;
 
     if (
       isLocked &&
@@ -1073,7 +1073,7 @@ export default function NhanHaTruongNinh() {
               </p>
             ) : (
               <p className="mt-3 text-sm text-gray-500">
-                🔒 Tập 5 trở đi: mua bộ 15.000đ hoặc đăng ký VIP.
+                🔒 Tập 9 trở đi: mua bộ 15.000đ hoặc đăng ký VIP.
               </p>
             )}
 
@@ -1089,7 +1089,7 @@ export default function NhanHaTruongNinh() {
               const isFinal = false;
 
               const isLocked =
-                episode.id >= 5 &&
+                episode.id >= 9 &&
                 !isVip &&
                 !hasMovieAccess;
 
@@ -1448,8 +1448,8 @@ export default function NhanHaTruongNinh() {
                 </p>
               ) : (
                 <p className="mt-2 text-sm text-gray-500">
-                  Tập 1–4 miễn phí.
-                  Tập 5 trở đi cần mở khóa.
+                  Tập 1–8 miễn phí.
+                  Tập 9 trở đi cần mở khóa.
                 </p>
               )}
 
