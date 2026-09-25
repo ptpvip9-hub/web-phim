@@ -4,35 +4,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { movies } from "@/lib/movies";
 
 type FavoriteMovie = {
   id: string;
   movie_slug: string;
   movie_title: string;
   created_at: string;
-};
-
-const movieInfo: Record<
-  string,
-  {
-    poster: string;
-    href: string;
-    description: string;
-  }
-> = {
-  "yeu-den-muc-cam-ky": {
-    poster: "/poster-yeu-den-muc-cam-ky.jpg",
-    href: "/phim/yeu-den-muc-cam-ky",
-    description:
-      "Một câu chuyện tình yêu đầy day dứt và những cảm xúc không thể thoát khỏi.",
-  },
-
-  "chap-niem-tram-hoang": {
-    poster: "/poster-chap-niem-tram-hoang.jpg",
-    href: "/phim/chap-niem-tram-hoang",
-    description:
-      "Một câu chuyện tình cảm đầy bí ẩn và những chấp niệm khó buông bỏ.",
-  },
 };
 
 export default function YeuThichPage() {
@@ -60,20 +38,14 @@ export default function YeuThichPage() {
 
     const { data, error } = await supabase
       .from("user_favorites")
-      .select(
-        "id, movie_slug, movie_title, created_at"
-      )
+      .select("id, movie_slug, movie_title, created_at")
       .eq("user_id", user.id)
       .order("created_at", {
         ascending: false,
       });
 
     if (error) {
-      console.error(
-        "Lỗi tải danh sách yêu thích:",
-        error
-      );
-
+      console.error("Lỗi tải danh sách yêu thích:", error);
       setFavorites([]);
     } else {
       setFavorites(data || []);
@@ -99,23 +71,16 @@ export default function YeuThichPage() {
       .eq("id", id);
 
     if (error) {
-      console.error(
-        "Lỗi xóa yêu thích:",
-        error
-      );
+      console.error("Lỗi xóa yêu thích:", error);
 
-      alert(
-        "Không thể bỏ phim khỏi yêu thích."
-      );
+      alert("Không thể bỏ phim khỏi yêu thích.");
 
       setRemovingId(null);
       return;
     }
 
     setFavorites((current) =>
-      current.filter(
-        (movie) => movie.id !== id
-      )
+      current.filter((movie) => movie.id !== id)
     );
 
     setRemovingId(null);
@@ -126,7 +91,6 @@ export default function YeuThichPage() {
 
       {/* HEADER */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">
-
         <div className="mx-auto flex h-[70px] max-w-7xl items-center justify-between px-5">
 
           <Link
@@ -162,7 +126,7 @@ export default function YeuThichPage() {
             </Link>
 
             <Link
-              href="/phim/yeu-den-muc-cam-ky"
+              href="/phim"
               className="font-medium text-gray-400 transition hover:text-white"
             >
               Phim mới
@@ -178,7 +142,6 @@ export default function YeuThichPage() {
           </Link>
 
         </div>
-
       </header>
 
       {/* CONTENT */}
@@ -225,148 +188,133 @@ export default function YeuThichPage() {
         )}
 
         {/* EMPTY */}
-        {!loading &&
-          favorites.length === 0 && (
+        {!loading && favorites.length === 0 && (
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-pink-950/20 to-zinc-950 p-12 text-center">
 
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-pink-950/20 to-zinc-950 p-12 text-center">
-
-              <div className="text-6xl">
-                💔
-              </div>
-
-              <h2 className="mt-5 text-2xl font-black">
-                Chưa có phim yêu thích
-              </h2>
-
-              <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-gray-500">
-                Khi bạn tìm thấy một bộ phim yêu thích,
-                hãy bấm nút ❤️ để lưu lại và xem nhanh
-                bất cứ lúc nào.
-              </p>
-
-              <Link
-                href="/phim"
-                className="mt-7 inline-flex rounded-xl bg-red-600 px-6 py-3 font-bold transition hover:bg-red-700"
-              >
-                🎬 Khám phá phim
-              </Link>
-
+            <div className="text-6xl">
+              💔
             </div>
-          )}
+
+            <h2 className="mt-5 text-2xl font-black">
+              Chưa có phim yêu thích
+            </h2>
+
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-gray-500">
+              Khi bạn tìm thấy một bộ phim yêu thích,
+              hãy bấm nút ❤️ để lưu lại và xem nhanh
+              bất cứ lúc nào.
+            </p>
+
+            <Link
+              href="/phim"
+              className="mt-7 inline-flex rounded-xl bg-red-600 px-6 py-3 font-bold transition hover:bg-red-700"
+            >
+              🎬 Khám phá phim
+            </Link>
+
+          </div>
+        )}
 
         {/* MOVIES */}
-        {!loading &&
-          favorites.length > 0 && (
+        {!loading && favorites.length > 0 && (
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
 
-            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {favorites.map((favorite) => {
 
-              {favorites.map((movie) => {
+              const movie = movies.find(
+                (item) => item.slug === favorite.movie_slug
+              );
 
-                const info =
-                  movieInfo[movie.movie_slug];
+              // Nếu slug trong database không còn tồn tại
+              // trong lib/movies.ts thì không hiển thị lỗi.
+              if (!movie) {
+                return null;
+              }
 
-                const poster =
-                  info?.poster ||
-                  "/poster-yeu-den-muc-cam-ky.jpg";
+              return (
+                <div
+                  key={favorite.id}
+                  className="group overflow-hidden rounded-2xl border border-white/10 bg-zinc-950"
+                >
 
-                const href =
-                  info?.href ||
-                  `/phim/${movie.movie_slug}`;
+                  {/* POSTER */}
+                  <Link href={movie.href}>
 
-                const description =
-                  info?.description ||
-                  "Phim đang được cập nhật tại TRÀ ĐÁ DRAMA.";
+                    <div className="relative aspect-[2/3] overflow-hidden bg-zinc-900">
 
-                return (
-                  <div
-                    key={movie.id}
-                    className="group overflow-hidden rounded-2xl border border-white/10 bg-zinc-950"
-                  >
+                      <img
+                        src={movie.poster}
+                        alt={movie.title}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
 
-                    {/* POSTER */}
-                    <Link href={href}>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
 
-                      <div className="relative aspect-[2/3] overflow-hidden bg-zinc-900">
+                      <span className="absolute left-3 top-3 rounded-md bg-pink-500 px-2 py-1 text-xs font-bold">
+                        ❤️ YÊU THÍCH
+                      </span>
 
-                        <img
-                          src={poster}
-                          alt={movie.movie_title}
-                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                        />
+                    </div>
 
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+                  </Link>
 
-                        <span className="absolute left-3 top-3 rounded-md bg-pink-500 px-2 py-1 text-xs font-bold">
-                          ❤️ YÊU THÍCH
-                        </span>
+                  {/* INFO */}
+                  <div className="p-4">
 
-                      </div>
+                    <Link href={movie.href}>
+
+                      <h2 className="line-clamp-2 font-bold transition group-hover:text-red-500">
+                        {movie.title}
+                      </h2>
 
                     </Link>
 
-                    {/* INFO */}
-                    <div className="p-4">
+                    <p className="mt-2 line-clamp-2 text-xs leading-5 text-gray-500">
+                      {movie.description}
+                    </p>
 
-                      <Link href={href}>
+                    <p className="mt-3 text-xs text-gray-600">
+                      Đã thêm:{" "}
+                      {new Date(
+                        favorite.created_at
+                      ).toLocaleDateString("vi-VN")}
+                    </p>
 
-                        <h2 className="line-clamp-2 font-bold transition group-hover:text-red-500">
-                          {movie.movie_title}
-                        </h2>
+                    <div className="mt-4 flex gap-2">
 
+                      <Link
+                        href={movie.href}
+                        className="flex-1 rounded-lg bg-red-600 px-3 py-2.5 text-center text-xs font-bold transition hover:bg-red-700"
+                      >
+                        🎬 Xem phim
                       </Link>
 
-                      <p className="mt-2 line-clamp-2 text-xs leading-5 text-gray-500">
-                        {description}
-                      </p>
-
-                      <p className="mt-3 text-xs text-gray-600">
-                        Đã thêm:{" "}
-                        {new Date(
-                          movie.created_at
-                        ).toLocaleDateString(
-                          "vi-VN"
-                        )}
-                      </p>
-
-                      <div className="mt-4 flex gap-2">
-
-                        <Link
-                          href={href}
-                          className="flex-1 rounded-lg bg-red-600 px-3 py-2.5 text-center text-xs font-bold transition hover:bg-red-700"
-                        >
-                          🎬 Xem phim
-                        </Link>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removeFavorite(
-                              movie.id
-                            )
-                          }
-                          disabled={
-                            removingId ===
-                            movie.id
-                          }
-                          className="rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm transition hover:border-pink-500/40 hover:bg-pink-500/10 disabled:opacity-50"
-                          title="Bỏ yêu thích"
-                        >
-                          {removingId ===
-                          movie.id
-                            ? "..."
-                            : "💔"}
-                        </button>
-
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeFavorite(favorite.id)
+                        }
+                        disabled={
+                          removingId === favorite.id
+                        }
+                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm transition hover:border-pink-500/40 hover:bg-pink-500/10 disabled:opacity-50"
+                        title="Bỏ yêu thích"
+                      >
+                        {removingId === favorite.id
+                          ? "..."
+                          : "💔"}
+                      </button>
 
                     </div>
 
                   </div>
-                );
-              })}
 
-            </div>
-          )}
+                </div>
+              );
+            })}
+
+          </div>
+        )}
 
       </section>
 
