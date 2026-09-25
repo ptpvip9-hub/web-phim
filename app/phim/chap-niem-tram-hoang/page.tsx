@@ -20,7 +20,7 @@ type Episode = {
   video: string;
 };
 
-const episodes = Array.from({ length: 14 }, (_, index) => {
+const episodes = Array.from({ length: 15 }, (_, index) => {
   const episode = index + 1;
 
   return {
@@ -891,7 +891,7 @@ export default function ChapNiemTramHoang() {
               </span>
 
               <span className="rounded-md bg-white/10 px-3 py-1.5">
-                14 PHẦN
+                15 PHẦN
               </span>
 
               <span className="rounded-md bg-white/10 px-3 py-1.5">
@@ -1415,7 +1415,7 @@ export default function ChapNiemTramHoang() {
               </span>
 
               <span className="rounded-md bg-white/5 px-3 py-2 text-sm text-gray-300">
-                📺 14 phần
+                📺 15 phần
               </span>
 
               <span className="rounded-md bg-white/5 px-3 py-2 text-sm text-gray-300">
