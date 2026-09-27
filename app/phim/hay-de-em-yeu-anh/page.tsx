@@ -688,7 +688,7 @@ export default function HayDeEmYeuAnh() {
   const changeEpisode = async (episode: Episode) => {
     if (checkingAccess) return;
 
-    const isLocked = episode.id >= 5;
+    const isLocked = episode.id >= 7;
 
     if (
       isLocked &&
@@ -1077,7 +1077,7 @@ export default function HayDeEmYeuAnh() {
               </p>
             ) : (
               <p className="mt-3 text-sm text-gray-500">
-                🔒 Tập 5 trở đi: mua bộ 10.000đ hoặc đăng ký VIP.
+                🔒 Tập 7 trở đi: mua bộ 10.000đ hoặc đăng ký VIP.
               </p>
             )}
 
@@ -1094,7 +1094,7 @@ export default function HayDeEmYeuAnh() {
                 episode.title === "Tập cuối";
 
               const isLocked =
-                episode.id >= 5 &&
+                episode.id >= 7 &&
                 !isVip &&
                 !hasMovieAccess;
 
@@ -1456,8 +1456,8 @@ export default function HayDeEmYeuAnh() {
                 </p>
               ) : (
                 <p className="mt-2 text-sm text-gray-500">
-                  Tập 1–4 miễn phí.
-                  Tập 5 trở đi cần mở khóa.
+                  Tập 1–6 miễn phí.
+                  Tập 7 trở đi cần mở khóa.
                 </p>
               )}
 
