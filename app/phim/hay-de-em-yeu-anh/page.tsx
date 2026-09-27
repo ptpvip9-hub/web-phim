@@ -688,7 +688,7 @@ export default function HayDeEmYeuAnh() {
   const changeEpisode = async (episode: Episode) => {
     if (checkingAccess) return;
 
-    const isLocked = episode.id >= 5;
+    const isLocked = episode.id >= 7;
 
     if (
       isLocked &&
@@ -883,9 +883,9 @@ export default function HayDeEmYeuAnh() {
             </p>
 
             <h1 className="mt-5 font-serif text-5xl font-black leading-tight md:text-7xl">
-              HÃY ĐỂ EM
+              YÊU ĐẾN MỨC
               <br />
-              YÊU ANH
+              CẤM KỴ
             </h1>
 
             <div className="mt-6 flex flex-wrap gap-3 text-sm">
@@ -922,9 +922,10 @@ export default function HayDeEmYeuAnh() {
             </div>
 
             <p className="mt-7 max-w-2xl text-base leading-8 text-gray-300 md:text-lg">
-              Một câu chuyện tình cảm đầy cảm xúc,
-              với những rung động, lựa chọn và tình yêu
-              không dễ dàng.
+              Một câu chuyện tình yêu đầy day dứt,
+              nơi những cảm xúc tưởng như không thể
+              lại trở thành một mối tình không thể
+              thoát khỏi.
             </p>
 
             {/* NÚT XEM + YÊU THÍCH */}
@@ -1076,7 +1077,7 @@ export default function HayDeEmYeuAnh() {
               </p>
             ) : (
               <p className="mt-3 text-sm text-gray-500">
-                🔒 Tập 5 trở đi: mua bộ 15.000đ hoặc đăng ký VIP.
+                🔒 Tập 7 trở đi: mua bộ 15.000đ hoặc đăng ký VIP.
               </p>
             )}
 
@@ -1093,7 +1094,7 @@ export default function HayDeEmYeuAnh() {
                 episode.title === "Tập cuối";
 
               const isLocked =
-                episode.id >= 5 &&
+                episode.id >= 7 &&
                 !isVip &&
                 !hasMovieAccess;
 
@@ -1433,9 +1434,10 @@ export default function HayDeEmYeuAnh() {
             </div>
 
             <p className="mt-7 leading-8 text-gray-400">
-              Một câu chuyện tình cảm đầy cảm xúc,
-              với những rung động, lựa chọn và tình yêu
-              không dễ dàng.
+              Một câu chuyện tình yêu đầy day dứt,
+              nơi những cảm xúc tưởng như không thể
+              lại trở thành một mối tình không thể
+              thoát khỏi.
             </p>
 
             <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.03] p-5">
