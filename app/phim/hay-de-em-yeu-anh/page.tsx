@@ -12,7 +12,7 @@ const R2_BASE =
 
 const MOVIE_SLUG = "hay-de-em-yeu-anh";
 const MOVIE_TITLE = "Hãy Để Em Yêu Anh";
-const MOVIE_PRICE = 10000;
+const MOVIE_PRICE = 5000;
 
 type Episode = {
   id: number;
@@ -310,7 +310,7 @@ export default function HayDeEmYeuAnh() {
     }
 
     // Khi đang xem, tối đa khoảng 1 lần / 10 giây.
-    if (!force && Date.now() - lastHistorySaveAt.current < 10000) {
+    if (!force && Date.now() - lastHistorySaveAt.current < 5000){
       return;
     }
 
@@ -345,7 +345,7 @@ export default function HayDeEmYeuAnh() {
     if (saveHistoryTimer.current) return;
 
     const elapsed = Date.now() - lastHistorySaveAt.current;
-    const delay = Math.max(1000, 10000 - elapsed);
+    const delay = Math.max(1000, 5000 - elapsed);
 
     saveHistoryTimer.current = setTimeout(() => {
       saveHistoryTimer.current = null;
@@ -1077,7 +1077,7 @@ export default function HayDeEmYeuAnh() {
               </p>
             ) : (
               <p className="mt-3 text-sm text-gray-500">
-                🔒 Tập 7 trở đi: mua bộ 10.000đ hoặc đăng ký VIP.
+                🔒 Tập 7 trở đi: mua bộ 5.000đ hoặc đăng ký VIP.
               </p>
             )}
 
@@ -1329,7 +1329,7 @@ export default function HayDeEmYeuAnh() {
                 </p>
 
                 <p className="mt-3 text-2xl font-black text-red-400">
-                  10.000đ
+                  5.000đ
                 </p>
 
               </div>
@@ -1342,7 +1342,7 @@ export default function HayDeEmYeuAnh() {
               >
                 {creatingOrder
                   ? "Đang tạo đơn..."
-                  : "🔓 Mua bộ phim — 10.000đ"}
+                  : "🔓 Mua bộ phim — 5.000đ"}
               </button>
 
             </div>
@@ -1578,7 +1578,7 @@ export default function HayDeEmYeuAnh() {
                 </p>
 
                 <div className="mt-4 text-xl font-black text-red-400">
-                  10000đ
+                  5000đ
                 </div>
 
                 <div className="mt-4 rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-black text-white">
@@ -1724,7 +1724,7 @@ export default function HayDeEmYeuAnh() {
               </div>
 
               <div className="mt-1 text-4xl font-black text-red-400">
-                10.000đ
+                5.000đ
               </div>
 
             </div>
@@ -1850,7 +1850,7 @@ export default function HayDeEmYeuAnh() {
 
                 Chuyển đúng{" "}
                 <strong className="text-white">
-                  10.000đ
+                  5.000đ
                 </strong>{" "}
                 và ghi đúng mã đơn:
 
